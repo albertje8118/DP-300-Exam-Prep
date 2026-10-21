@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="DP-300 (Administering Relational Databases on Microsoft Azure) exam simulator and practice bank."
+    />
+    <title>DP-300 Exam Prep</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230f6cbd'/><text x='16' y='22' font-size='16' font-family='Segoe UI' font-weight='700' fill='white' text-anchor='middle'>D3</text></svg>"
+    />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <p class="eyebrow">Exam Prep</p>
+          <h1>DP-300</h1>
+          <p class="topbar-subtitle">Administering Relational Databases on Microsoft Azure</p>
+          <p id="mode-description" class="topbar-copy">
+            Practise the extracted question bank with instant feedback, or switch to a
+            timed exam simulator.
+          </p>
+        </div>
+
+        <div class="mode-switch" role="tablist" aria-label="Study modes">
+          <button id="mode-practice" class="mode-button active" type="button" role="tab">
+            Practice
+          </button>
+          <button id="mode-exam" class="mode-button" type="button" role="tab">
+            Exam Simulator
+          </button>
+        </div>
+
+        <div id="summary-strip" class="summary-strip" aria-live="polite"></div>
+
+        <div class="command-strip">
+          <button id="reset-progress" class="ghost-button" type="button">Reset Practice</button>
+          <button id="start-exam" class="solid-button" type="button">Start Exam</button>
+          <button id="new-exam" class="ghost-button" type="button" hidden>New Random Exam</button>
+          <button id="submit-exam" class="solid-button danger" type="button" hidden>Submit Exam</button>
+        </div>
+      </header>
+
+      <main class="content-shell">
+        <section class="question-panel">
+          <header class="toolbar">
+            <div>
+              <p id="session-label" class="eyebrow">Practice Bank</p>
+              <h2 id="question-title">Loading...</h2>
+            </div>
+            <div class="toolbar-actions">
+              <span id="question-position" class="pill">Question 0 / 0</span>
+              <span id="selection-mode" class="pill muted">Single answer</span>
+              <span id="question-kind" class="pill muted"></span>
+              <span id="exam-clock" class="pill accent" hidden>120:00</span>
+            </div>
+          </header>
+
+          <!-- Practice-mode filter bar -->
+          <section id="filter-bar" class="filter-bar">
+            <label class="field">
+              <span class="field-label">Topic</span>
+              <select id="filter-topic" class="select"></select>
+            </label>
+            <label class="field">
+              <span class="field-label">Exam category</span>
+              <select id="filter-category" class="select"></select>
+            </label>
+            <label class="field">
+              <span class="field-label">Type</span>
+              <select id="filter-type" class="select"></select>
+            </label>
+            <label class="field field-check">
+              <input id="filter-answerable" type="checkbox" />
+              <span>Answerable only</span>
+            </label>
+            <div class="filter-actions">
+              <span id="filter-summary" class="filter-summary"></span>
+              <button id="filter-reset" class="ghost-button small" type="button">Reset filters</button>
+            </div>
+          </section>
+
+          <!-- Exam-mode blueprint -->
+          <section id="exam-blueprint" class="exam-blueprint" hidden>
+            <h3>Exam Blueprint</h3>
+            <p class="blueprint-lead">
+              The simulator mirrors the real DP-300 shape: the case studies come first
+              with <em>every</em> question in the selected study, then lab tasks, then the
+              remaining miscellaneous questions.
+            </p>
+            <div class="blueprint-grid">
+              <label class="field">
+                <span class="field-label">Case studies</span>
+                <select id="exam-scenarios" class="select">
+                  <option value="1">1 case study (random)</option>
+                  <option value="2" selected>2 case studies (random)</option>
+                </select>
+              </label>
+              <label class="field">
+                <span class="field-label">Lab tasks (Topic 5)</span>
+                <select id="exam-lab" class="select"></select>
+              </label>
+              <label class="field">
+                <span class="field-label">Questions</span>
+                <input id="exam-count" class="select" type="number" min="10" max="120" step="5" value="60" />
+              </label>
+              <label class="field">
+                <span class="field-label">Duration (minutes)</span>
+                <input id="exam-duration" class="select" type="number" min="15" max="240" step="5" value="120" />
+              </label>
+            </div>
+            <p id="blueprint-summary" class="blueprint-summary"></p>
+          </section>
+
+          <article>
+            <div id="scenario-panel" class="scenario-panel" hidden>
+              <button id="scenario-toggle" class="scenario-toggle" type="button" aria-expanded="false">
+                <span class="scenario-badge">Case study</span>
+                <span id="scenario-title" class="scenario-name"></span>
+                <span class="scenario-chevron" aria-hidden="true">▸</span>
+              </button>
+              <div id="scenario-body" class="scenario-body" hidden></div>
+            </div>
+
+            <p id="question-text" class="question-text"></p>
+            <div id="question-media" class="media-stack" hidden></div>
+            <div id="options-list" class="options-list"></div>
+            <p id="question-note" class="question-note" hidden></p>
+          </article>
+
+          <div class="actions-row">
+            <button id="prev-button" class="ghost-button" type="button">Previous</button>
+            <button id="clear-selection" class="ghost-button" type="button">Clear Selection</button>
+            <button id="flag-question" class="ghost-button" type="button" hidden>Flag for Review</button>
+            <button id="check-button" class="solid-button" type="button" hidden>Check Answer</button>
+            <button id="toggle-explanation" class="ghost-button" type="button" disabled>
+              See Explanation
+            </button>
+            <button id="next-button" class="solid-button" type="button">Next</button>
+          </div>
+
+          <div id="feedback-banner" class="feedback-banner" hidden></div>
+
+          <section id="explanation-panel" class="explanation-panel" hidden>
+            <h3>Explanation</h3>
+            <p id="explanation-text"></p>
+            <div id="explanation-media" class="media-stack" hidden></div>
+            <div id="explanation-references" class="reference-list" hidden></div>
+          </section>
+        </section>
+
+        <section class="navigator-panel">
+          <div class="navigator-header">
+            <div>
+              <p class="eyebrow">Question Navigator</p>
+              <h3 id="navigator-title">Browse All Questions</h3>
+            </div>
+            <p id="navigator-caption" class="navigator-caption"></p>
+          </div>
+          <div id="question-grid" class="question-grid"></div>
+          <div id="exam-results" class="exam-results" hidden></div>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <span
+          >Question bank extracted from the DumpsMate DP-300 dump &mdash;
+          <span id="footer-count">0</span> questions, <span id="footer-images">0</span> images.
+        </span>
+        <span class="footer-links">
+          <a href="https://learn.microsoft.com/credentials/certifications/exams/dp-300" target="_blank" rel="noopener"
+            >Microsoft Learn</a
+          >
+          <a href="https://learn.microsoft.com/azure/azure-sql/" target="_blank" rel="noopener">Azure SQL docs</a>
+        </span>
+      </footer>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay">
+      <div class="loading-card">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="loading-text">Loading the question bank...</p>
+      </div>
+    </div>
+
+    <script src="assets/app.js"></script>
+  </body>
+</html>

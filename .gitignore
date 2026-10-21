@@ -1,0 +1,13 @@
+# macOS / editors
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local tooling
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+
+# Nothing in this folder is generated at runtime - the bank and the
+# images are committed so GitHub Pages can serve them directly.
