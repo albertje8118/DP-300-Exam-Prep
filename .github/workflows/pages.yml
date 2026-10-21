@@ -24,6 +24,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Stamp the build version
+        run: |
+          sed -i "s/{{BUILD_VERSION}}/${{ github.sha }}/g" index.html
+          grep -q "${{ github.sha }}" index.html
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 

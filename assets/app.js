@@ -16,6 +16,12 @@ const DEFAULTS = {
   labCount: 10,
 };
 
+/* Build stamp injected into index.html by the Pages workflow. It keeps the
+   bank and the app on the same version, so a redeploy never pairs a fresh
+   app.js with a stale questions.json. */
+const BUILD_VERSION =
+  document.querySelector('meta[name="build-version"]')?.content || 'dev';
+
 const STORAGE = {
   practice: 'dp300.practice.v1',
   filters: 'dp300.filters.v1',
@@ -187,7 +193,7 @@ function saveJson(key, value) {
 
 async function loadBank() {
   el.loadingText.textContent = 'Loading the question bank...';
-  const response = await fetch('questions.json');
+  const response = await fetch(`questions.json?v=${encodeURIComponent(BUILD_VERSION)}`);
   if (!response.ok) {
     throw new Error(`Could not load questions.json (HTTP ${response.status})`);
   }

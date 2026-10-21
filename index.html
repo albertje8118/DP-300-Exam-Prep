@@ -8,7 +8,10 @@
       content="DP-300 (Administering Relational Databases on Microsoft Azure) exam simulator and practice bank."
     />
     <title>DP-300 Exam Prep</title>
-    <link rel="stylesheet" href="assets/styles.css" />
+    <!-- Stamped with the commit SHA by the Pages workflow, so a redeploy
+         never pairs a fresh app.js with a stale questions.json. -->
+    <meta name="build-version" content="{{BUILD_VERSION}}" />
+    <link rel="stylesheet" href="assets/styles.css?v={{BUILD_VERSION}}" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230f6cbd'/><text x='16' y='22' font-size='16' font-family='Segoe UI' font-weight='700' fill='white' text-anchor='middle'>D3</text></svg>"
@@ -188,6 +191,6 @@
       </div>
     </div>
 
-    <script src="assets/app.js"></script>
+    <script src="assets/app.js?v={{BUILD_VERSION}}"></script>
   </body>
 </html>
