@@ -220,6 +220,9 @@ a {
 .navigator-panel {
   padding: 16px 18px 18px;
   display: grid;
+  /* An `auto` track would size to the header's max-content width and push
+     the panel into horizontal overflow - keep it flexible. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   position: sticky;
   top: 18px;
@@ -290,6 +293,7 @@ a {
 .ghost-button:focus-visible,
 .option-button:focus-visible,
 .nav-chip:focus-visible,
+.navigator-toggle:focus-visible,
 .scenario-toggle:focus-visible {
   outline: 3px solid rgba(15, 108, 189, 0.4);
   outline-offset: 2px;
@@ -664,17 +668,115 @@ button:disabled {
 /* ---------- Navigator ---------- */
 
 .navigator-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 16px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.navigator-heading {
+  min-width: 0;
 }
 
 .navigator-caption {
+  grid-column: 1 / -1;
+  min-width: 0;
   margin: 0;
   color: var(--text-muted);
   font-size: 0.88rem;
+  overflow-wrap: break-word;
+}
+
+.navigator-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(24, 42, 68, 0.16);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--accent-strong);
+  font: inherit;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.navigator-toggle:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 108, 189, 0.4);
+}
+
+.navigator-toggle-icon {
+  font-size: 1.32rem;
+  line-height: 1;
+  transition: transform 180ms ease;
+}
+
+/* The wordmark only earns its place on the collapsed rail. */
+.navigator-toggle-label {
+  display: none;
+}
+
+.navigator-content {
+  display: grid;
+  gap: 12px;
+}
+
+/* Collapsed rail (desktop only): the panel folds into a slim vertical tab
+   that keeps the panel reachable without stealing question width. */
+@media (min-width: 1081px) {
+  .nav-collapsed .content-shell {
+    grid-template-columns: minmax(0, 1fr) 62px;
+  }
+
+  .nav-collapsed .navigator-panel {
+    padding: 14px 9px;
+    gap: 14px;
+    justify-items: center;
+    align-content: start;
+  }
+
+  .nav-collapsed .navigator-heading,
+  .nav-collapsed .navigator-caption,
+  .nav-collapsed .navigator-content {
+    display: none;
+  }
+
+  .nav-collapsed .navigator-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .nav-collapsed .navigator-toggle {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 8px;
+    border-radius: 18px;
+  }
+
+  .nav-collapsed .navigator-toggle-label {
+    display: block;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+
+  .nav-collapsed .navigator-toggle-icon {
+    order: -1;
+    transform: rotate(180deg);
+  }
 }
 
 .question-grid {
@@ -736,11 +838,14 @@ button:disabled {
 /* ---------- Exam results ---------- */
 
 .exam-results {
-  margin-top: 8px;
+  margin-top: 0;
   padding: 16px;
   border-radius: 18px;
   background: rgba(15, 108, 189, 0.07);
   border: 1px solid rgba(15, 108, 189, 0.18);
+  /* The result tables have a hard min-content width; let them scroll inside
+     the card instead of stretching the whole navigator panel. */
+  overflow-x: auto;
 }
 
 .exam-results h3 {
@@ -764,22 +869,22 @@ button:disabled {
 .result-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
 }
 
 .result-table th,
 .result-table td {
   text-align: left;
-  padding: 6px 8px;
+  padding: 6px 5px;
   border-bottom: 1px solid rgba(24, 42, 68, 0.1);
 }
 
 .result-table th {
   color: var(--text-muted);
   font-weight: 600;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
 }
 
 .result-table td.num {
@@ -848,7 +953,9 @@ button:disabled {
   .option-button:hover:not(:disabled),
   .mode-button,
   .solid-button,
-  .ghost-button {
+  .ghost-button,
+  .navigator-toggle,
+  .navigator-toggle-icon {
     transition: none;
   }
 }
@@ -863,6 +970,15 @@ button:disabled {
   .navigator-panel {
     position: static;
     max-height: none;
+  }
+
+  /* Single column: the panel keeps its heading and only the grid folds away. */
+  .nav-collapsed .navigator-content {
+    display: none;
+  }
+
+  .nav-collapsed .navigator-toggle-icon {
+    transform: rotate(180deg);
   }
 }
 

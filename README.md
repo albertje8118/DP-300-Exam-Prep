@@ -14,7 +14,7 @@ index.html                       the app shell
 assets/styles.css                design system
 assets/app.js                    application logic
 questions.json                   the extracted question bank
-extracted_images/                573 images referenced by the bank
+extracted_images/                570 images referenced by the bank
 ```
 
 `questions.json` has three top-level collections:
@@ -72,6 +72,19 @@ and lab tasks (the answer is a walk-through, not a multiple-choice key).
 The app never pretends otherwise: the results screen reports the score over
 the graded questions and states how many could not be scored, and ungraded
 questions are marked as such in the navigator.
+
+## The navigator panel
+
+The question/exam navigator on the right can be collapsed with the chevron
+button in its header. On a desktop screen it folds into a slim vertical rail
+that still shows the word *Navigator*, so the question pane gets the full
+width. Below 1080px the layout is a single column and the toggle only folds
+the question grid away, keeping the panel heading visible.
+
+The choice is remembered in `localStorage` under `dp300.ui.v1` and is restored
+before the first paint, so a reload never flashes the expanded layout.
+Submitting an exam re-opens the panel automatically, because that is where
+the score appears.
 
 ## Running locally
 

@@ -26,6 +26,7 @@ const STORAGE = {
   practice: 'dp300.practice.v1',
   filters: 'dp300.filters.v1',
   exam: 'dp300.exam.v1',
+  ui: 'dp300.ui.v1',
 };
 
 const TYPE_LABELS = {
@@ -52,6 +53,9 @@ const state = {
     category: 'all',
     type: 'all',
     answerableOnly: false,
+  },
+  ui: {
+    navigatorCollapsed: false,
   },
   exam: {
     questions: [],
@@ -121,6 +125,7 @@ const el = {
   feedbackBanner: document.getElementById('feedback-banner'),
   navigatorTitle: document.getElementById('navigator-title'),
   navigatorCaption: document.getElementById('navigator-caption'),
+  navigatorToggle: document.getElementById('navigator-toggle'),
   questionGrid: document.getElementById('question-grid'),
   examResults: document.getElementById('exam-results'),
   loadingOverlay: document.getElementById('loading-overlay'),
@@ -401,6 +406,33 @@ function applyFilterInputs() {
   el.filterCategory.value = state.filters.category;
   el.filterType.value = state.filters.type;
   el.filterAnswerable.checked = state.filters.answerableOnly;
+}
+
+/* The collapsed state lives on <body> so the inline bootstrap script in
+   index.html can set it before the shell paints. */
+function applyNavigatorCollapsed() {
+  const collapsed = state.ui.navigatorCollapsed;
+  document.body.classList.toggle('nav-collapsed', collapsed);
+  const label = collapsed
+    ? 'Expand question navigator'
+    : 'Collapse question navigator';
+  el.navigatorToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  el.navigatorToggle.setAttribute('aria-label', label);
+  el.navigatorToggle.title = label;
+}
+
+function setNavigatorCollapsed(collapsed) {
+  state.ui.navigatorCollapsed = Boolean(collapsed);
+  applyNavigatorCollapsed();
+  saveJson(STORAGE.ui, state.ui);
+}
+
+function restoreUi() {
+  const saved = loadJson(STORAGE.ui, null);
+  if (saved && typeof saved.navigatorCollapsed === 'boolean') {
+    state.ui.navigatorCollapsed = saved.navigatorCollapsed;
+  }
+  applyNavigatorCollapsed();
 }
 
 function persistExam() {
@@ -1320,6 +1352,9 @@ function finishExam(status) {
   state.exam.status = status;
   state.visibleExplanations.clear();
   persistExam();
+  // The score lives in the navigator panel - reveal it even when the panel
+  // was collapsed while the paper was being answered.
+  setNavigatorCollapsed(false);
   renderQuestion();
 }
 
@@ -1378,6 +1413,9 @@ el.newExam.addEventListener('click', () => startExamSession(true));
 el.submitExam.addEventListener('click', () => finishExam('submitted'));
 el.toggleExplanation.addEventListener('click', () => toggleExplanation());
 el.scenarioToggle.addEventListener('click', () => toggleScenario());
+el.navigatorToggle.addEventListener('click', () =>
+  setNavigatorCollapsed(!state.ui.navigatorCollapsed)
+);
 
 el.filterTopic.addEventListener('change', () => {
   state.filters.topic = el.filterTopic.value;
@@ -1440,6 +1478,8 @@ document.addEventListener('keydown', (event) => {
 /* ------------------------------------------------------------------ */
 /* boot                                                                */
 /* ------------------------------------------------------------------ */
+
+restoreUi();
 
 loadBank().catch((error) => {
   el.loadingOverlay.hidden = false;

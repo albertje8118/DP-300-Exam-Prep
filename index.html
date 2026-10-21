@@ -18,6 +18,18 @@
     />
   </head>
   <body>
+    <!-- Restore the collapsed navigator before the shell paints, so a saved
+         preference never flashes the expanded layout on load. -->
+    <script>
+      try {
+        var ui = JSON.parse(window.localStorage.getItem('dp300.ui.v1') || '{}');
+        if (ui && ui.navigatorCollapsed) {
+          document.body.classList.add('nav-collapsed');
+        }
+      } catch (error) {
+        /* storage unavailable - the navigator simply starts expanded */
+      }
+    </script>
     <div class="app-shell">
       <header class="topbar">
         <div class="brand-block">
@@ -159,14 +171,28 @@
 
         <section class="navigator-panel">
           <div class="navigator-header">
-            <div>
+            <div class="navigator-heading">
               <p class="eyebrow">Question Navigator</p>
               <h3 id="navigator-title">Browse All Questions</h3>
             </div>
+            <button
+              id="navigator-toggle"
+              class="navigator-toggle"
+              type="button"
+              aria-expanded="true"
+              aria-controls="navigator-content"
+              aria-label="Collapse question navigator"
+              title="Collapse question navigator"
+            >
+              <span class="navigator-toggle-label">Navigator</span>
+              <span class="navigator-toggle-icon" aria-hidden="true">&rsaquo;</span>
+            </button>
             <p id="navigator-caption" class="navigator-caption"></p>
           </div>
-          <div id="question-grid" class="question-grid"></div>
-          <div id="exam-results" class="exam-results" hidden></div>
+          <div id="navigator-content" class="navigator-content">
+            <div id="question-grid" class="question-grid"></div>
+            <div id="exam-results" class="exam-results" hidden></div>
+          </div>
         </section>
       </main>
 
