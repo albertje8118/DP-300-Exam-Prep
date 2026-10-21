@@ -1033,7 +1033,6 @@ function renderTopControls() {
   updateSummary();
 
   const examRunning = state.exam.status === 'running';
-  const examReady = state.exam.questions.length > 0;
 
   el.modeDescription.textContent =
     state.mode === 'practice'
@@ -1043,8 +1042,10 @@ function renderTopControls() {
   el.filterBar.hidden = state.mode !== 'practice';
   el.examBlueprint.hidden = state.mode !== 'exam' || examRunning;
   el.resetProgress.hidden = state.mode !== 'practice';
-  el.startExam.hidden = state.mode !== 'exam' || examRunning;
-  el.newExam.hidden = state.mode !== 'exam' || !examReady || examRunning;
+  // One clear action per state: start from the previewed blueprint,
+  // submit while running, or generate a fresh paper after a review.
+  el.startExam.hidden = state.mode !== 'exam' || examRunning || isExamReview();
+  el.newExam.hidden = state.mode !== 'exam' || !isExamReview();
   el.submitExam.hidden = state.mode !== 'exam' || !examRunning;
   el.examClock.hidden = state.mode !== 'exam';
   el.examClock.textContent = formatTime(state.exam.remainingSeconds);
