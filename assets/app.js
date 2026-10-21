@@ -53,6 +53,7 @@ const state = {
     flagged: new Set(),
     status: 'idle',
     remainingSeconds: DEFAULTS.examMinutes * 60,
+    deadline: 0,
     timerId: null,
     scenarios: [],
     plan: null,
@@ -405,6 +406,9 @@ function persistExam() {
     answers: [...state.exam.answers.entries()],
     flagged: [...state.exam.flagged.entries()],
     status: state.exam.status,
+    // A wall-clock deadline, so closing the tab does not hand out extra
+    // exam time.
+    deadline: state.exam.deadline,
     remainingSeconds: state.exam.remainingSeconds,
     scenarios: state.exam.scenarios.map((s) => s.id),
     settings: state.exam.settings,
@@ -424,15 +428,29 @@ function restoreExam() {
   state.exam.answers = new Map(saved.answers || []);
   state.exam.flagged = new Set(saved.flagged || []);
   state.exam.status = saved.status;
-  state.exam.remainingSeconds = saved.remainingSeconds || 0;
   state.exam.scenarios = (saved.scenarios || []).map((id) => state.scenariosById.get(id)).filter(Boolean);
   Object.assign(state.exam.settings, saved.settings || {});
+
+  if (saved.deadline && state.exam.status === 'running') {
+    state.exam.deadline = saved.deadline;
+    state.exam.remainingSeconds = Math.max(0, Math.round((saved.deadline - Date.now()) / 1000));
+    if (state.exam.remainingSeconds <= 0) {
+      state.exam.status = 'expired';
+    }
+  } else {
+    state.exam.deadline = saved.deadline || 0;
+    state.exam.remainingSeconds = saved.remainingSeconds || 0;
+  }
+
   el.examScenarios.value = String(state.exam.settings.scenarioCount);
   el.examLab.value = String(state.exam.settings.labCount);
   el.examCount.value = String(state.exam.settings.questionCount);
   el.examDuration.value = String(state.exam.settings.durationMinutes);
+
   if (state.exam.status === 'running') {
     startExamTimer();
+    // Come back up in the exam, not in the practice bank.
+    state.mode = 'exam';
   }
 }
 
@@ -1316,6 +1334,7 @@ function startExamSession(reshuffle = false) {
   state.exam.answers.clear();
   state.exam.flagged.clear();
   state.exam.remainingSeconds = state.exam.settings.durationMinutes * 60;
+  state.exam.deadline = Date.now() + state.exam.remainingSeconds * 1000;
   state.exam.status = 'running';
   startExamTimer();
   persistExam();
