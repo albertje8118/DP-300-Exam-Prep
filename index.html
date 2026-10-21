@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
       content="DP-300 (Administering Relational Databases on Microsoft Azure) exam simulator and practice bank."
@@ -47,18 +47,35 @@
             Practice
           </button>
           <button id="mode-exam" class="mode-button" type="button" role="tab">
-            Exam Simulator
+            <span class="mode-label-long">Exam Simulator</span>
+            <span class="mode-label-short">Exam</span>
+          </button>
+        </div>
+
+        <div class="command-strip">
+          <span id="exam-clock" class="pill accent" hidden>120:00</span>
+          <button id="reset-progress" class="ghost-button" type="button">Reset Practice</button>
+          <button id="start-exam" class="solid-button" type="button">Start Exam</button>
+          <button id="new-exam" class="ghost-button" type="button" hidden>
+            <span class="btn-label-long">New Random Exam</span>
+            <span class="btn-label-short">New Exam</span>
+          </button>
+          <button id="submit-exam" class="solid-button danger" type="button" hidden>Submit Exam</button>
+          <button
+            id="mobile-navigator"
+            class="mobile-navigator"
+            type="button"
+            aria-expanded="false"
+            aria-controls="navigator-panel"
+            aria-label="Open the question navigator"
+            title="Open the question navigator"
+          >
+            <span class="mobile-navigator-icon" aria-hidden="true">&#9776;</span>
+            <span class="mobile-navigator-text">Questions</span>
           </button>
         </div>
 
         <div id="summary-strip" class="summary-strip" aria-live="polite"></div>
-
-        <div class="command-strip">
-          <button id="reset-progress" class="ghost-button" type="button">Reset Practice</button>
-          <button id="start-exam" class="solid-button" type="button">Start Exam</button>
-          <button id="new-exam" class="ghost-button" type="button" hidden>New Random Exam</button>
-          <button id="submit-exam" class="solid-button danger" type="button" hidden>Submit Exam</button>
-        </div>
       </header>
 
       <main class="content-shell">
@@ -72,7 +89,6 @@
               <span id="question-position" class="pill">Question 0 / 0</span>
               <span id="selection-mode" class="pill muted">Single answer</span>
               <span id="question-kind" class="pill muted"></span>
-              <span id="exam-clock" class="pill accent" hidden>120:00</span>
             </div>
           </header>
 
@@ -149,14 +165,18 @@
           </article>
 
           <div class="actions-row">
-            <button id="prev-button" class="ghost-button" type="button">Previous</button>
-            <button id="clear-selection" class="ghost-button" type="button">Clear Selection</button>
-            <button id="flag-question" class="ghost-button" type="button" hidden>Flag for Review</button>
-            <button id="check-button" class="solid-button" type="button" hidden>Check Answer</button>
-            <button id="toggle-explanation" class="ghost-button" type="button" disabled>
-              See Explanation
-            </button>
-            <button id="next-button" class="solid-button" type="button">Next</button>
+            <div class="actions-secondary">
+              <button id="clear-selection" class="ghost-button" type="button">Clear Selection</button>
+              <button id="flag-question" class="ghost-button" type="button" hidden>Flag for Review</button>
+              <button id="check-button" class="solid-button" type="button" hidden>Check Answer</button>
+              <button id="toggle-explanation" class="ghost-button" type="button" disabled>
+                See Explanation
+              </button>
+            </div>
+            <div class="actions-primary">
+              <button id="prev-button" class="ghost-button" type="button">Previous</button>
+              <button id="next-button" class="solid-button" type="button">Next</button>
+            </div>
           </div>
 
           <div id="feedback-banner" class="feedback-banner" hidden></div>
@@ -169,24 +189,35 @@
           </section>
         </section>
 
-        <section class="navigator-panel">
+        <section id="navigator-panel" class="navigator-panel">
           <div class="navigator-header">
             <div class="navigator-heading">
               <p class="eyebrow">Question Navigator</p>
               <h3 id="navigator-title">Browse All Questions</h3>
             </div>
-            <button
-              id="navigator-toggle"
-              class="navigator-toggle"
-              type="button"
-              aria-expanded="true"
-              aria-controls="navigator-content"
-              aria-label="Collapse question navigator"
-              title="Collapse question navigator"
-            >
-              <span class="navigator-toggle-label">Navigator</span>
-              <span class="navigator-toggle-icon" aria-hidden="true">&rsaquo;</span>
-            </button>
+            <div class="navigator-tools">
+              <button
+                id="navigator-toggle"
+                class="navigator-toggle"
+                type="button"
+                aria-expanded="true"
+                aria-controls="navigator-content"
+                aria-label="Collapse question navigator"
+                title="Collapse question navigator"
+              >
+                <span class="navigator-toggle-label">Navigator</span>
+                <span class="navigator-toggle-icon" aria-hidden="true">&rsaquo;</span>
+              </button>
+              <button
+                id="nav-close"
+                class="nav-close"
+                type="button"
+                aria-label="Close the question navigator"
+                title="Close the question navigator"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
             <p id="navigator-caption" class="navigator-caption"></p>
           </div>
           <div id="navigator-content" class="navigator-content">
@@ -216,6 +247,8 @@
         <p id="loading-text">Loading the question bank...</p>
       </div>
     </div>
+
+    <div id="nav-backdrop" class="nav-backdrop"></div>
 
     <script src="assets/app.js?v={{BUILD_VERSION}}"></script>
   </body>

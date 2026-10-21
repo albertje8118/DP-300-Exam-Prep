@@ -86,6 +86,28 @@ before the first paint, so a reload never flashes the expanded layout.
 Submitting an exam re-opens the panel automatically, because that is where
 the score appears.
 
+## Mobile layout
+
+Below 820px the exam simulator becomes a thumb-first single column:
+
+- **Sticky header** – the wordmark, the mode switch, the live timer and the
+  action button stay on screen while the question scrolls under them.
+- **Fixed action bar** – *Previous* and *Next* are pinned to the bottom of
+  the viewport, so a question can be navigated without scrolling back up.
+  The secondary actions (Clear, Flag, Check answer, Explanation) sit in a
+  scrollable row just above it.
+- **Navigator as a bottom sheet** – the ☰ button slides the question grid up
+  from the bottom over a dimmed page. Tapping a number jumps to that question
+  and dismisses the sheet; ✕, the backdrop and `Esc` close it.
+- **Compact blueprint** – the four simulator settings collapse into
+  label-on-the-left, control-on-the-right rows.
+
+Landscape phones (short viewports) keep the two-column layout but get a
+one-row header so it does not eat the screen.
+
+The timer moved from the question toolbar into the header, which keeps it
+visible on every screen size while an exam is running.
+
 ## Running locally
 
 Any static file server works — the app only needs `questions.json` to be

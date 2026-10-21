@@ -56,6 +56,7 @@ const state = {
   },
   ui: {
     navigatorCollapsed: false,
+    navigatorOpen: false,
   },
   exam: {
     questions: [],
@@ -126,6 +127,10 @@ const el = {
   navigatorTitle: document.getElementById('navigator-title'),
   navigatorCaption: document.getElementById('navigator-caption'),
   navigatorToggle: document.getElementById('navigator-toggle'),
+  navigatorPanel: document.getElementById('navigator-panel'),
+  navClose: document.getElementById('nav-close'),
+  navBackdrop: document.getElementById('nav-backdrop'),
+  mobileNavigator: document.getElementById('mobile-navigator'),
   questionGrid: document.getElementById('question-grid'),
   examResults: document.getElementById('exam-results'),
   loadingOverlay: document.getElementById('loading-overlay'),
@@ -433,6 +438,35 @@ function restoreUi() {
     state.ui.navigatorCollapsed = saved.navigatorCollapsed;
   }
   applyNavigatorCollapsed();
+}
+
+/* ------------------------------------------------------------------ */
+/* phone layout: the navigator is a bottom sheet                        */
+/* ------------------------------------------------------------------ */
+
+const PHONE_QUERY = '(max-width: 820px)';
+
+function isPhoneLayout() {
+  return window.matchMedia(PHONE_QUERY).matches;
+}
+
+/** Open or close the bottom sheet that carries the navigator on a phone. */
+function setNavigatorOpen(open) {
+  state.ui.navigatorOpen = Boolean(open);
+  document.body.classList.toggle('nav-open', state.ui.navigatorOpen);
+  el.mobileNavigator.setAttribute(
+    'aria-expanded',
+    state.ui.navigatorOpen ? 'true' : 'false'
+  );
+
+  if (state.ui.navigatorOpen) {
+    el.navClose.focus();
+  } else if (
+    document.activeElement &&
+    el.navigatorPanel.contains(document.activeElement)
+  ) {
+    el.mobileNavigator.focus();
+  }
 }
 
 function persistExam() {
@@ -940,6 +974,10 @@ function renderNavigator() {
     chip.addEventListener('click', () => {
       state.currentIndex = index;
       renderQuestion();
+      // On a phone the grid lives in a bottom sheet - jump and dismiss.
+      if (isPhoneLayout()) {
+        setNavigatorOpen(false);
+      }
     });
     el.questionGrid.appendChild(chip);
   });
@@ -1355,6 +1393,9 @@ function finishExam(status) {
   // The score lives in the navigator panel - reveal it even when the panel
   // was collapsed while the paper was being answered.
   setNavigatorCollapsed(false);
+  if (isPhoneLayout()) {
+    setNavigatorOpen(true);
+  }
   renderQuestion();
 }
 
@@ -1416,6 +1457,19 @@ el.scenarioToggle.addEventListener('click', () => toggleScenario());
 el.navigatorToggle.addEventListener('click', () =>
   setNavigatorCollapsed(!state.ui.navigatorCollapsed)
 );
+el.mobileNavigator.addEventListener('click', () =>
+  setNavigatorOpen(!state.ui.navigatorOpen)
+);
+el.navClose.addEventListener('click', () => setNavigatorOpen(false));
+el.navBackdrop.addEventListener('click', () => setNavigatorOpen(false));
+
+// Leaving the phone layout puts the navigator back in the page flow, so the
+// sheet must not stay open behind it.
+window.addEventListener('resize', () => {
+  if (!isPhoneLayout() && state.ui.navigatorOpen) {
+    setNavigatorOpen(false);
+  }
+});
 
 el.filterTopic.addEventListener('change', () => {
   state.filters.topic = el.filterTopic.value;
@@ -1466,6 +1520,10 @@ window.addEventListener('beforeunload', stopExamTimer);
 
 document.addEventListener('keydown', (event) => {
   if (event.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)) {
+    return;
+  }
+  if (event.key === 'Escape' && state.ui.navigatorOpen) {
+    setNavigatorOpen(false);
     return;
   }
   if (event.key === 'ArrowRight') {
