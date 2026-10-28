@@ -72,6 +72,7 @@ function appApi(context) {
     updateAnswerStateCounts: context.updateAnswerStateCounts,
     canShowExplanation: context.canShowExplanation,
     questionTypesInOrder: context.questionTypesInOrder,
+    renderMarkdown: context.renderMarkdown,
     // `TYPE_LABELS` is a top-level `const`, so it lives in the realm's
     // lexical scope rather than on the global object.
     typeLabels: vm.runInContext('TYPE_LABELS', context),

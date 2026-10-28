@@ -567,30 +567,38 @@ function renderMarkdownInline(node, text, terms) {
 /**
  * Render the explanation's markdown.
  *
- * Supported: paragraphs, `**bold**`, `*italic*`, `` `code` ``, `- ` bullets
- * and `[text](url)` links. The references are rendered by the app itself
- * below the explanation, so the text does not need to repeat them.
+ * Supported: paragraphs, `**bold**`, `*italic*`, `` `code` ``, `- ` bullets,
+ * `1. ` numbered steps and `[text](url)` links. The references are rendered
+ * by the app itself below the explanation, so the text does not need to
+ * repeat them.
  */
 function renderMarkdown(node, text, terms) {
   node.textContent = '';
   let list = null;
+  let listTag = null;
   for (const rawLine of String(text || '').split('\n')) {
     const line = rawLine.trim();
     if (!line) {
       continue;
     }
     const bullet = /^[-*]\s+(.*)$/.exec(line);
-    if (bullet) {
-      if (!list) {
-        list = document.createElement('ul');
+    const numbered = /^(\d+)\.\s+(.*)$/.exec(line);
+    if (bullet || numbered) {
+      const tag = bullet ? 'ul' : 'ol';
+      if (!list || listTag !== tag) {
+        list = document.createElement(tag);
+        listTag = tag;
         node.appendChild(list);
       }
       const item = document.createElement('li');
-      renderMarkdownInline(item, bullet[1], terms);
+      // A bullet captures its text in group 1; a numbered line puts the
+      // number in group 1 and the text in group 2.
+      renderMarkdownInline(item, bullet ? bullet[1] : numbered[2], terms);
       list.appendChild(item);
       continue;
     }
     list = null;
+    listTag = null;
     const paragraph = document.createElement('p');
     renderMarkdownInline(paragraph, line, terms);
     node.appendChild(paragraph);

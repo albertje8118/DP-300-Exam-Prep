@@ -1227,7 +1227,8 @@ button:disabled {
   border: 1px solid rgb(var(--border-rgb) / 0.12);
 }
 
-.explanation-panel ul {
+.explanation-panel ul,
+.explanation-panel ol {
   margin: 8px 0 0;
   padding-left: 22px;
 }
