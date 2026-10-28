@@ -3,26 +3,88 @@
    background, frosted panels, pill controls and a numbered navigator grid.
    The palette is re-tuned towards Azure blue for this exam. */
 
+/* Every color in this sheet is composed from the tokens below, so a dark
+   theme is a token swap rather than a second stylesheet. The `-rgb` triplets
+   are consumed as `rgb(var(--token-rgb) / <alpha>)`, which keeps every tint in
+   the sheet expressible while letting the dark theme re-tint it. */
 :root {
   color-scheme: light;
+
+  --surface-rgb: 255 255 255;
+  --border-rgb: 24 42 68;
+  --accent-rgb: 15 108 189;
+  --muted-rgb: 90 103 121;
+  --warning-rgb: 154 91 19;
+  --error-rgb: 184 68 58;
+  --success-rgb: 47 143 87;
+  --shadow-rgb: 28 45 70;
+  --overlay-rgb: 18 28 44;
+  --code-bg-rgb: 240 244 250;
+
   --page-bg: radial-gradient(circle at 12% 8%, #d8e8f7 0%, #e6ecf4 30%, #e9e4f2 62%, #dfe6f5 100%);
-  --panel-bg: rgba(255, 255, 255, 0.86);
-  --panel-border: rgba(24, 42, 68, 0.12);
+  --panel-bg: rgb(var(--surface-rgb) / 0.86);
+  --panel-border: rgb(var(--border-rgb) / 0.12);
   --text-main: #16202e;
   --text-muted: #5a6779;
+  --text-invert: #ffffff;
   --accent: #0f6cbd;
   --accent-strong: #0a4f8a;
-  --accent-soft: rgba(15, 108, 189, 0.12);
+  --accent-soft: rgb(var(--accent-rgb) / 0.12);
   --azure: #0078d4;
   --warning: #9a5b13;
-  --option-bg: rgba(255, 255, 255, 0.86);
-  --option-border: rgba(24, 42, 68, 0.12);
+  --option-bg: rgb(var(--surface-rgb) / 0.86);
+  --option-border: rgb(var(--border-rgb) / 0.12);
   --success-bg: #d8f3e0;
   --success-border: #2f8f57;
   --error-bg: #fce0dd;
   --error-border: #b8443a;
-  --shadow: 0 22px 60px rgba(28, 45, 70, 0.14);
+  --error-text: #97362d;
+  --danger-solid: #a84336;
+  --danger-strong: #8d3329;
+  --surface-solid: #ffffff;
+  --shadow: 0 22px 60px rgb(var(--shadow-rgb) / 0.14);
   --radius: 22px;
+}
+
+/* Dark theme. The app sets `data-theme="dark"` on <html> - from the student's
+   choice, or from `prefers-color-scheme` when the choice is "auto" - so this
+   block is the single source of truth for the dark palette. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --surface-rgb: 30 41 58;
+  --border-rgb: 148 170 200;
+  --accent-rgb: 96 178 240;
+  --muted-rgb: 156 172 192;
+  --warning-rgb: 224 168 92;
+  --error-rgb: 240 130 120;
+  --success-rgb: 106 204 140;
+  --shadow-rgb: 4 8 14;
+  --overlay-rgb: 6 10 16;
+  --code-bg-rgb: 22 30 42;
+
+  --page-bg: radial-gradient(circle at 12% 8%, #16243a 0%, #111b2b 34%, #171a2e 64%, #101c2c 100%);
+  --panel-bg: rgb(var(--surface-rgb) / 0.92);
+  --panel-border: rgb(var(--border-rgb) / 0.22);
+  --text-main: #e8eef6;
+  --text-muted: #9db0c6;
+  --text-invert: #ffffff;
+  --accent: #4aa3e0;
+  --accent-strong: #2b7fc4;
+  --accent-soft: rgb(var(--accent-rgb) / 0.16);
+  --azure: #4aa3e0;
+  --warning: #e0a85c;
+  --option-bg: rgb(var(--surface-rgb) / 0.92);
+  --option-border: rgb(var(--border-rgb) / 0.22);
+  --success-bg: rgb(var(--success-rgb) / 0.18);
+  --success-border: rgb(var(--success-rgb) / 0.55);
+  --error-bg: rgb(var(--error-rgb) / 0.18);
+  --error-border: rgb(var(--error-rgb) / 0.55);
+  --error-text: #f7a89f;
+  --danger-solid: #b8453a;
+  --danger-strong: #98362c;
+  --surface-solid: #1e293a;
+  --shadow: 0 22px 60px rgb(var(--shadow-rgb) / 0.5);
 }
 
 * {
@@ -78,7 +140,7 @@ a {
 
 .topbar {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) auto minmax(0, 1.15fr) auto;
+  grid-template-columns: minmax(0, 1.15fr) auto minmax(0, 1.45fr) auto;
   align-items: center;
   gap: 18px;
   padding: 18px 22px;
@@ -129,8 +191,8 @@ a {
   min-width: 88px;
   padding: 8px 11px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(24, 42, 68, 0.09);
+  background: rgb(var(--surface-rgb) / 0.78);
+  border: 1px solid rgb(var(--border-rgb) / 0.09);
 }
 
 .summary-label {
@@ -154,8 +216,8 @@ a {
 }
 
 .mode-button {
-  border: 1px solid rgba(24, 42, 68, 0.14);
-  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgb(var(--border-rgb) / 0.14);
+  background: rgb(var(--surface-rgb) / 0.66);
   color: var(--text-main);
   border-radius: 999px;
   padding: 10px 16px;
@@ -165,13 +227,13 @@ a {
 }
 
 .mode-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgb(var(--surface-rgb) / 0.95);
 }
 
 .mode-button.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--text-invert);
 }
 
 /* The short label is only used on phones, where the full one does not fit. */
@@ -193,18 +255,18 @@ a {
 }
 
 .pill.muted {
-  background: rgba(90, 103, 121, 0.13);
+  background: rgb(var(--muted-rgb) / 0.13);
   color: var(--text-muted);
 }
 
 .pill.accent {
-  background: rgba(154, 91, 19, 0.15);
+  background: rgb(var(--warning-rgb) / 0.15);
   color: var(--warning);
 }
 
 .pill.danger {
-  background: rgba(184, 68, 58, 0.15);
-  color: #97362d;
+  background: rgb(var(--error-rgb) / 0.15);
+  color: var(--error-text);
 }
 
 /* ---------- Layout ---------- */
@@ -286,8 +348,8 @@ a {
   flex-wrap: wrap;
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(24, 42, 68, 0.1);
+  background: rgb(var(--surface-rgb) / 0.66);
+  border: 1px solid rgb(var(--border-rgb) / 0.1);
 }
 
 .field {
@@ -308,8 +370,8 @@ a {
   font: inherit;
   padding: 9px 11px;
   border-radius: 12px;
-  border: 1px solid rgba(24, 42, 68, 0.16);
-  background: #fff;
+  border: 1px solid rgb(var(--border-rgb) / 0.16);
+  background: var(--surface-solid);
   color: var(--text-main);
   min-width: 150px;
 }
@@ -322,7 +384,7 @@ a {
 .nav-chip:focus-visible,
 .navigator-toggle:focus-visible,
 .scenario-toggle:focus-visible {
-  outline: 3px solid rgba(15, 108, 189, 0.4);
+  outline: 3px solid rgb(var(--accent-rgb) / 0.4);
   outline-offset: 2px;
 }
 
@@ -334,6 +396,22 @@ a {
   padding-bottom: 10px;
   font-size: 0.9rem;
   color: var(--text-muted);
+}
+
+/* The search box takes the room the other filters do not need. */
+.field-search {
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+/* A search hit is marked with the accent tint rather than the browser's
+   yellow, which would clash with both palettes. */
+.search-hit {
+  background: var(--accent-soft);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 600;
 }
 
 .field-check input {
@@ -355,13 +433,333 @@ a {
   color: var(--text-muted);
 }
 
+/* ---------- Progress report ---------- */
+/* The report answers "what am I bad at?", so it sits directly under the
+   filters - the student reaches for it right after a practice session. */
+.progress-report {
+  margin-top: 14px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgb(var(--accent-rgb) / 0.05);
+  border: 1px solid rgb(var(--accent-rgb) / 0.16);
+}
+
+.report-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.report-header h3 {
+  font-size: 1.05rem;
+  margin-top: 2px;
+}
+
+.report-totals {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.report-lead {
+  margin: 10px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-main);
+}
+
+.report-actions {
+  margin-top: 12px;
+}
+
+.report-rows {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.report-row {
+  border-radius: 12px;
+}
+
+.report-row.weakest {
+  background: rgb(var(--warning-rgb) / 0.1);
+  border: 1px solid rgb(var(--warning-rgb) / 0.26);
+}
+
+.report-row-button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(90px, 1fr) 92px minmax(0, 0.9fr);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  font: inherit;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.report-row-button:hover {
+  background: rgb(var(--surface-rgb) / 0.7);
+  border-color: rgb(var(--border-rgb) / 0.16);
+}
+
+.report-row-button:focus-visible {
+  outline: 3px solid rgb(var(--accent-rgb) / 0.4);
+  outline-offset: 2px;
+}
+
+.report-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgb(var(--muted-rgb) / 0.16);
+  overflow: hidden;
+}
+
+.report-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.report-bar-fill.good {
+  background: rgb(var(--success-rgb) / 0.85);
+}
+
+.report-bar-fill.poor {
+  background: rgb(var(--error-rgb) / 0.85);
+}
+
+.report-bar-fill.empty {
+  background: transparent;
+}
+
+.report-score {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-score.muted {
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.report-weight {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Export dialog and printable record ---------- */
+
+/* The on-screen record. The printable one lives in #print-report, which is
+   hidden until the page prints. */
+.export-dialog {
+  width: min(760px, 94vw);
+  max-height: 88vh;
+  padding: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: var(--panel-bg);
+  color: var(--text-main);
+  box-shadow: var(--shadow);
+}
+
+.export-dialog::backdrop {
+  background: rgb(var(--overlay-rgb) / 0.5);
+}
+
+.export-inner {
+  padding: 20px 22px;
+  overflow: auto;
+  max-height: 88vh;
+  display: grid;
+  gap: 14px;
+}
+
+.export-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.export-header h2 {
+  font-size: 1.15rem;
+}
+
+.export-summary {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.export-breakdown {
+  overflow-x: auto;
+}
+
+.export-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.export-table th,
+.export-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgb(var(--border-rgb) / 0.14);
+  text-align: left;
+}
+
+.export-table th {
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.export-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.export-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.export-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* The printable record. It is never on screen - the print stylesheet is
+   what makes it visible. */
+.print-report {
+  display: none;
+}
+
+/* ---------- Print ---------- */
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  /* Only the record prints. */
+  body > *:not(#print-report) {
+    display: none !important;
+  }
+
+  .print-report {
+    display: block !important;
+    padding: 0;
+    font-size: 10pt;
+    line-height: 1.4;
+    color: #000;
+  }
+
+  .print-report h1 {
+    font-size: 16pt;
+    margin: 0 0 4pt;
+  }
+
+  .print-meta {
+    margin: 0 0 8pt;
+    font-size: 9pt;
+    color: #333;
+  }
+
+  .print-score {
+    margin: 0 0 12pt;
+    font-size: 12pt;
+    font-weight: 700;
+  }
+
+  .print-section {
+    margin-bottom: 14pt;
+    /* A table that runs over a page boundary repeats its header. */
+    break-inside: auto;
+  }
+
+  .print-section h2 {
+    font-size: 11pt;
+    margin: 0 0 4pt;
+    padding-bottom: 2pt;
+    border-bottom: 1px solid #999;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+  }
+
+  .print-table th,
+  .print-table td {
+    padding: 3pt 5pt;
+    border: 1px solid #bbb;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .print-table th {
+    background: #eee;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .print-table tr {
+    break-inside: avoid;
+  }
+
+  .print-table thead {
+    display: table-header-group;
+  }
+}
+
 /* ---------- Exam blueprint ---------- */
 
 .exam-blueprint {
   border-radius: 18px;
   padding: 16px 18px;
-  background: rgba(15, 108, 189, 0.07);
-  border: 1px solid rgba(15, 108, 189, 0.16);
+  background: rgb(var(--accent-rgb) / 0.07);
+  border: 1px solid rgb(var(--accent-rgb) / 0.16);
 }
 
 .exam-blueprint h3 {
@@ -392,8 +790,8 @@ a {
 
 .scenario-panel {
   border-radius: 18px;
-  border: 1px solid rgba(15, 108, 189, 0.22);
-  background: rgba(15, 108, 189, 0.06);
+  border: 1px solid rgb(var(--accent-rgb) / 0.22);
+  background: rgb(var(--accent-rgb) / 0.06);
   overflow: hidden;
 }
 
@@ -419,7 +817,7 @@ a {
   padding: 4px 9px;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--text-invert);
   white-space: nowrap;
 }
 
@@ -441,7 +839,7 @@ a {
 
 .scenario-body {
   padding: 4px 18px 18px;
-  border-top: 1px solid rgba(15, 108, 189, 0.18);
+  border-top: 1px solid rgb(var(--accent-rgb) / 0.18);
   max-height: 420px;
   overflow: auto;
 }
@@ -496,11 +894,81 @@ a {
   margin: 14px 0 0;
   padding: 11px 14px;
   border-radius: 14px;
-  background: rgba(154, 91, 19, 0.1);
-  border: 1px solid rgba(154, 91, 19, 0.24);
+  background: rgb(var(--warning-rgb) / 0.1);
+  border: 1px solid rgb(var(--warning-rgb) / 0.24);
   color: var(--warning);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+/* The shortcut hint sits under the question, in the same muted grey as the
+   rest of the supporting text - it is a reminder, not a warning. */
+.keyboard-hint {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* The student's own note on the question. It is a working area, not a
+   warning, so it is bordered quietly and stays out of the way. */
+.question-notes {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgb(var(--border-rgb) / 0.16);
+  background: rgb(var(--surface-rgb) / 0.55);
+}
+
+.question-notes .field-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.note-input {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  padding: 9px 11px;
+  border-radius: 12px;
+  border: 1px solid rgb(var(--border-rgb) / 0.16);
+  background: var(--surface-solid);
+  color: var(--text-main);
+}
+
+.note-input:focus-visible {
+  outline: 3px solid rgb(var(--accent-rgb) / 0.4);
+  outline-offset: 2px;
+}
+
+.note-status {
+  margin: 6px 0 0;
+  min-height: 1em;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* The time warning sits next to the clock. It is an aria-live region, so it
+   is announced when it appears. */
+.exam-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgb(var(--error-rgb) / 0.14);
+  border: 1px solid rgb(var(--error-rgb) / 0.32);
+  color: var(--error-text);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.exam-warning-action {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
 }
 
 .media-stack {
@@ -514,9 +982,9 @@ a {
   max-height: 520px;
   object-fit: contain;
   border-radius: 16px;
-  border: 1px solid rgba(24, 42, 68, 0.12);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 14px 40px rgba(28, 45, 70, 0.12);
+  border: 1px solid rgb(var(--border-rgb) / 0.12);
+  background: rgb(var(--surface-rgb) / 0.94);
+  box-shadow: 0 14px 40px rgb(var(--shadow-rgb) / 0.12);
 }
 
 .options-list {
@@ -542,7 +1010,7 @@ a {
 
 .option-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(15, 108, 189, 0.4);
+  border-color: rgb(var(--accent-rgb) / 0.4);
 }
 
 .option-button:disabled {
@@ -550,8 +1018,8 @@ a {
 }
 
 .option-button.selected {
-  border-color: rgba(15, 108, 189, 0.55);
-  background: rgba(15, 108, 189, 0.08);
+  border-color: rgb(var(--accent-rgb) / 0.55);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 .option-button.correct {
@@ -571,7 +1039,7 @@ a {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(15, 108, 189, 0.13);
+  background: rgb(var(--accent-rgb) / 0.13);
   color: var(--accent-strong);
   font-weight: 700;
 }
@@ -580,6 +1048,63 @@ a {
   line-height: 1.5;
   display: block;
   word-break: break-word;
+}
+
+/* An ordered question shows the step each picked action sits at, so the
+   sequence the student is being asked for is visible while they pick it. */
+.option-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: var(--text-invert);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.options-order-summary {
+  margin: 0 0 2px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+/* A per-statement question: one row per statement, each with its own
+   choices. The statement text is the question, so it gets the emphasis
+   and the choices sit underneath it. */
+.statement-row {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--option-border);
+  border-radius: 18px;
+  background: var(--option-bg);
+}
+
+.statement-text {
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.statement-options {
+  display: grid;
+  gap: 8px;
+}
+
+.statement-option {
+  grid-template-columns: 38px 1fr;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 14px;
 }
 
 .option-content {
@@ -611,7 +1136,7 @@ a {
 
 .solid-button {
   background: var(--accent);
-  color: #fff;
+  color: var(--text-invert);
 }
 
 .solid-button:hover:not(:disabled) {
@@ -619,26 +1144,33 @@ a {
 }
 
 .solid-button.danger {
-  background: #a84336;
+  background: var(--danger-solid);
 }
 
 .solid-button.danger:hover:not(:disabled) {
-  background: #8d3329;
+  background: var(--danger-strong);
 }
 
 .ghost-button {
-  background: rgba(255, 255, 255, 0.68);
-  border-color: rgba(24, 42, 68, 0.14);
+  background: rgb(var(--surface-rgb) / 0.68);
+  border-color: rgb(var(--border-rgb) / 0.14);
   color: var(--text-main);
 }
 
 .ghost-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgb(var(--surface-rgb) / 0.95);
 }
 
 .ghost-button.small {
   padding: 8px 13px;
   font-size: 0.86rem;
+}
+
+/* The theme toggle is the one control that is always on screen, so it is
+   kept quiet - it reads as a setting, not as a primary action. */
+.theme-toggle {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 button:disabled {
@@ -665,13 +1197,13 @@ button:disabled {
 }
 
 .feedback-banner[data-type="info"] {
-  background: rgba(15, 108, 189, 0.08);
-  border: 1px solid rgba(15, 108, 189, 0.2);
+  background: rgb(var(--accent-rgb) / 0.08);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
 }
 
 .explanation-panel {
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(24, 42, 68, 0.1);
+  background: rgb(var(--surface-rgb) / 0.74);
+  border: 1px solid rgb(var(--border-rgb) / 0.1);
 }
 
 .explanation-panel p {
@@ -737,8 +1269,8 @@ button:disabled {
   height: 38px;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid rgba(24, 42, 68, 0.16);
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgb(var(--border-rgb) / 0.16);
+  background: rgb(var(--surface-rgb) / 0.72);
   color: var(--accent-strong);
   font: inherit;
   cursor: pointer;
@@ -746,8 +1278,8 @@ button:disabled {
 }
 
 .navigator-toggle:hover {
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(15, 108, 189, 0.4);
+  background: rgb(var(--surface-rgb) / 0.96);
+  border-color: rgb(var(--accent-rgb) / 0.4);
 }
 
 .navigator-toggle-icon {
@@ -828,9 +1360,9 @@ button:disabled {
 
 .nav-chip {
   width: 100%;
-  border: 1px solid rgba(24, 42, 68, 0.14);
+  border: 1px solid rgb(var(--border-rgb) / 0.14);
   border-radius: 11px;
-  background: rgba(255, 255, 255, 0.74);
+  background: rgb(var(--surface-rgb) / 0.74);
   color: var(--text-main);
   font: inherit;
   font-size: 0.85rem;
@@ -846,18 +1378,18 @@ button:disabled {
 }
 
 .nav-chip.answered {
-  background: rgba(15, 108, 189, 0.13);
-  border-color: rgba(15, 108, 189, 0.36);
+  background: rgb(var(--accent-rgb) / 0.13);
+  border-color: rgb(var(--accent-rgb) / 0.36);
 }
 
 .nav-chip.correct {
-  background: rgba(47, 143, 87, 0.16);
-  border-color: rgba(47, 143, 87, 0.45);
+  background: rgb(var(--success-rgb) / 0.16);
+  border-color: rgb(var(--success-rgb) / 0.45);
 }
 
 .nav-chip.wrong {
-  background: rgba(184, 68, 58, 0.16);
-  border-color: rgba(184, 68, 58, 0.45);
+  background: rgb(var(--error-rgb) / 0.16);
+  border-color: rgb(var(--error-rgb) / 0.45);
 }
 
 .nav-chip.flagged::after {
@@ -872,8 +1404,21 @@ button:disabled {
 }
 
 .nav-chip.ungraded {
-  background: rgba(90, 103, 121, 0.12);
+  background: rgb(var(--muted-rgb) / 0.12);
   border-style: dashed;
+}
+
+/* A question the student has written a note on carries a corner mark, so a
+   note can be found again from the navigator. */
+.nav-chip.noted::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 /* ---------- Exam results ---------- */
@@ -882,8 +1427,8 @@ button:disabled {
   margin-top: 0;
   padding: 16px;
   border-radius: 18px;
-  background: rgba(15, 108, 189, 0.07);
-  border: 1px solid rgba(15, 108, 189, 0.18);
+  background: rgb(var(--accent-rgb) / 0.07);
+  border: 1px solid rgb(var(--accent-rgb) / 0.18);
   /* The result tables have a hard min-content width; let them scroll inside
      the card instead of stretching the whole navigator panel. */
   overflow-x: auto;
@@ -917,7 +1462,7 @@ button:disabled {
 .result-table td {
   text-align: left;
   padding: 6px 5px;
-  border-bottom: 1px solid rgba(24, 42, 68, 0.1);
+  border-bottom: 1px solid rgb(var(--border-rgb) / 0.1);
 }
 
 .result-table th {
@@ -945,6 +1490,17 @@ button:disabled {
   color: var(--text-muted);
 }
 
+/* The offline state is worth saying out loud when the connection is gone. */
+.footer-offline {
+  margin-left: 10px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.footer-offline.warn {
+  color: var(--warning);
+}
+
 .footer-links {
   display: flex;
   gap: 14px;
@@ -957,7 +1513,7 @@ button:disabled {
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(240, 244, 250, 0.86);
+  background: rgb(var(--code-bg-rgb) / 0.86);
   backdrop-filter: blur(6px);
   z-index: 50;
 }
@@ -968,7 +1524,7 @@ button:disabled {
   gap: 14px;
   padding: 30px 38px;
   border-radius: 20px;
-  background: #fff;
+  background: var(--surface-solid);
   box-shadow: var(--shadow);
 }
 
@@ -976,7 +1532,7 @@ button:disabled {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 3px solid rgba(15, 108, 189, 0.2);
+  border: 3px solid rgb(var(--accent-rgb) / 0.2);
   border-top-color: var(--accent);
   animation: spin 900ms linear infinite;
 }
@@ -1242,8 +1798,8 @@ button:disabled {
     height: 38px;
     padding: 0 10px;
     border-radius: 999px;
-    border: 1px solid rgba(24, 42, 68, 0.16);
-    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgb(var(--border-rgb) / 0.16);
+    background: rgb(var(--surface-rgb) / 0.72);
     color: var(--accent-strong);
     font: inherit;
     font-size: 0.85rem;
@@ -1268,7 +1824,7 @@ button:disabled {
     /* A blurred ancestor would become the containing block for the fixed
        action bar, so the phone build swaps the blur for a solid panel. */
     backdrop-filter: none;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgb(var(--surface-rgb) / 0.95);
   }
 
   .toolbar {
@@ -1358,7 +1914,7 @@ button:disabled {
     padding: 10px 16px calc(20px + env(safe-area-inset-bottom));
     border-radius: 24px 24px 0 0;
     border-bottom: 0;
-    box-shadow: 0 -24px 60px rgba(28, 45, 70, 0.3);
+    box-shadow: 0 -24px 60px rgb(var(--shadow-rgb) / 0.3);
     transform: translateY(102%);
     visibility: hidden;
     transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), visibility 260ms;
@@ -1371,7 +1927,7 @@ button:disabled {
     width: 42px;
     height: 4px;
     border-radius: 999px;
-    background: rgba(24, 42, 68, 0.2);
+    background: rgb(var(--border-rgb) / 0.2);
     margin: 0 auto 10px;
   }
 
@@ -1401,8 +1957,8 @@ button:disabled {
     width: 36px;
     height: 36px;
     border-radius: 999px;
-    border: 1px solid rgba(24, 42, 68, 0.16);
-    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgb(var(--border-rgb) / 0.16);
+    background: rgb(var(--surface-rgb) / 0.8);
     color: var(--text-main);
     font-size: 1.25rem;
     line-height: 1;
@@ -1414,7 +1970,7 @@ button:disabled {
     position: fixed;
     inset: 0;
     z-index: 55;
-    background: rgba(18, 28, 44, 0.44);
+    background: rgb(var(--overlay-rgb) / 0.44);
     backdrop-filter: blur(2px);
   }
 
@@ -1455,9 +2011,9 @@ button:disabled {
     z-index: 30;
     gap: 10px;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, 0.94);
+    background: rgb(var(--surface-rgb) / 0.94);
     backdrop-filter: blur(14px);
-    border-top: 1px solid rgba(24, 42, 68, 0.12);
+    border-top: 1px solid rgb(var(--border-rgb) / 0.12);
   }
 
   .actions-primary button {

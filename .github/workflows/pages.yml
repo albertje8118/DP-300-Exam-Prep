@@ -15,7 +15,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The exam logic is the part that would silently mislead a student rather
+  # than crash: a question scored when it should not be, a key that grades as
+  # correct when it is not, a blueprint that describes a paper the app never
+  # builds. The deploy waits for this, so a broken build never goes out.
+  test:
+    name: Test the exam logic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run the test suite
+        run: node --test "tests/*.test.js"
+
   deploy:
+    needs: test
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -27,7 +47,9 @@ jobs:
       - name: Stamp the build version
         run: |
           sed -i "s/{{BUILD_VERSION}}/${{ github.sha }}/g" index.html
+          sed -i "s/{{BUILD_VERSION}}/${{ github.sha }}/g" sw.js
           grep -q "${{ github.sha }}" index.html
+          grep -q "${{ github.sha }}" sw.js
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

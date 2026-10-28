@@ -8,6 +8,27 @@
       content="DP-300 (Administering Relational Databases on Microsoft Azure) exam simulator and practice bank."
     />
     <title>DP-300 Exam Prep</title>
+    <!-- Resolve the theme before the first paint, so a student on a dark
+         desktop never gets a white flash. The same preference is read again
+         by app.js, which owns the toggle. -->
+    <script>
+      (function () {
+        var preference = 'auto';
+        try {
+          preference = JSON.parse(window.localStorage.getItem('dp300.theme.v1') || '"auto"');
+          if (['auto', 'light', 'dark'].indexOf(preference) === -1) {
+            preference = 'auto';
+          }
+        } catch (error) {
+          /* storage unavailable - follow the system */
+        }
+        var dark =
+          preference === 'dark' ||
+          (preference === 'auto' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      })();
+    </script>
     <!-- Stamped with the commit SHA by the Pages workflow, so a redeploy
          never pairs a fresh app.js with a stale questions.json. -->
     <meta name="build-version" content="{{BUILD_VERSION}}" />
@@ -37,23 +58,28 @@
           <h1>DP-300</h1>
           <p class="topbar-subtitle">Administering Relational Databases on Microsoft Azure</p>
           <p id="mode-description" class="topbar-copy">
-            Practise the extracted question bank with instant feedback, or switch to a
+            Practice the extracted question bank with instant feedback, or switch to a
             timed exam simulator.
           </p>
         </div>
 
-        <div class="mode-switch" role="tablist" aria-label="Study modes">
-          <button id="mode-practice" class="mode-button active" type="button" role="tab">
+        <div class="mode-switch" role="group" aria-label="Study modes">
+          <button id="mode-practice" class="mode-button active" type="button" aria-pressed="true">
             Practice
           </button>
-          <button id="mode-exam" class="mode-button" type="button" role="tab">
+          <button id="mode-exam" class="mode-button" type="button" aria-pressed="false">
             <span class="mode-label-long">Exam Simulator</span>
             <span class="mode-label-short">Exam</span>
           </button>
         </div>
 
         <div class="command-strip">
+          <button id="theme-toggle" class="ghost-button small theme-toggle" type="button">
+            <span id="theme-toggle-label">Theme: Auto</span>
+          </button>
+          <button id="export-open" class="ghost-button small" type="button">Report</button>
           <span id="exam-clock" class="pill accent" hidden>120:00</span>
+          <span id="exam-warning" class="exam-warning" role="alert" hidden></span>
           <button id="reset-progress" class="ghost-button" type="button">Reset Practice</button>
           <button id="start-exam" class="solid-button" type="button">Start Exam</button>
           <button id="new-exam" class="ghost-button" type="button" hidden>
@@ -79,7 +105,7 @@
       </header>
 
       <main class="content-shell">
-        <section class="question-panel">
+        <section id="question-panel" class="question-panel">
           <header class="toolbar">
             <div>
               <p id="session-label" class="eyebrow">Practice Bank</p>
@@ -106,6 +132,20 @@
               <span class="field-label">Type</span>
               <select id="filter-type" class="select"></select>
             </label>
+            <label class="field">
+              <span class="field-label">Answer state</span>
+              <select id="filter-answer-state" class="select"></select>
+            </label>
+            <label class="field field-search">
+              <span class="field-label">Search</span>
+              <input
+                id="filter-search"
+                class="select"
+                type="search"
+                autocomplete="off"
+                placeholder="question, option, explanation, link"
+              />
+            </label>
             <label class="field field-check">
               <input id="filter-answerable" type="checkbox" />
               <span>Answerable only</span>
@@ -114,6 +154,24 @@
               <span id="filter-summary" class="filter-summary"></span>
               <button id="filter-reset" class="ghost-button small" type="button">Reset filters</button>
             </div>
+          </section>
+
+          <!-- Practice-mode progress report -->
+          <section id="progress-report" class="progress-report" hidden>
+            <header class="report-header">
+              <div>
+                <p class="eyebrow">Progress report</p>
+                <h3 id="report-headline">Practice breakdown</h3>
+              </div>
+              <p id="report-totals" class="report-totals"></p>
+            </header>
+            <p id="report-lead" class="report-lead"></p>
+            <div class="report-actions">
+              <button id="report-drill" class="solid-button small" type="button" hidden>
+                Drill this area
+              </button>
+            </div>
+            <div id="report-rows" class="report-rows"></div>
           </section>
 
           <!-- Exam-mode blueprint -->
@@ -162,6 +220,19 @@
             <div id="question-media" class="media-stack" hidden></div>
             <div id="options-list" class="options-list"></div>
             <p id="question-note" class="question-note" hidden></p>
+            <p id="keyboard-hint" class="keyboard-hint"></p>
+
+            <!-- The student's own annotation of the question -->
+            <section id="question-notes" class="question-notes" hidden>
+              <label class="field-label" for="note-text">Your note</label>
+              <textarea
+                id="note-text"
+                class="note-input"
+                rows="3"
+                placeholder="Ask the instructor about this one..."
+              ></textarea>
+              <p id="note-status" class="note-status"></p>
+            </section>
           </article>
 
           <div class="actions-row">
@@ -169,6 +240,7 @@
               <button id="clear-selection" class="ghost-button" type="button">Clear Selection</button>
               <button id="flag-question" class="ghost-button" type="button" hidden>Flag for Review</button>
               <button id="check-button" class="solid-button" type="button" hidden>Check Answer</button>
+              <button id="copy-link" class="ghost-button" type="button">Copy Link</button>
               <button id="toggle-explanation" class="ghost-button" type="button" disabled>
                 See Explanation
               </button>
@@ -179,7 +251,7 @@
             </div>
           </div>
 
-          <div id="feedback-banner" class="feedback-banner" hidden></div>
+          <div id="feedback-banner" class="feedback-banner" role="status" aria-live="polite" hidden></div>
 
           <section id="explanation-panel" class="explanation-panel" hidden>
             <h3>Explanation</h3>
@@ -231,6 +303,7 @@
         <span
           >Question bank extracted from the DumpsMate DP-300 dump &mdash;
           <span id="footer-count">0</span> questions, <span id="footer-images">0</span> images.
+          <span id="footer-offline" class="footer-offline" hidden>Offline copy ready.</span>
         </span>
         <span class="footer-links">
           <a href="https://learn.microsoft.com/credentials/certifications/exams/dp-300" target="_blank" rel="noopener"
@@ -249,6 +322,36 @@
     </div>
 
     <div id="nav-backdrop" class="nav-backdrop"></div>
+
+    <!-- The printable record. It is built when the student asks for it and
+         is the only thing on the page when it prints. -->
+    <div id="print-report" class="print-report" aria-hidden="true"></div>
+
+    <!-- The export dialog: what the student sees before printing. -->
+    <dialog id="export-dialog" class="export-dialog">
+      <div class="export-inner">
+        <header class="export-header">
+          <h2 id="export-title">Practice report</h2>
+          <button id="export-close" class="ghost-button small" type="button">Close</button>
+        </header>
+        <label class="field">
+          <span class="field-label">Student name</span>
+          <input
+            id="export-student"
+            class="select"
+            type="text"
+            placeholder="Name on the attendance sheet"
+          />
+        </label>
+        <p id="export-summary" class="export-summary"></p>
+        <div id="export-breakdown" class="export-breakdown"></div>
+        <p id="export-note" class="export-note"></p>
+        <div class="export-actions">
+          <button id="export-print" class="solid-button" type="button">Print / Save as PDF</button>
+          <button id="export-csv" class="ghost-button" type="button">Download CSV</button>
+        </div>
+      </div>
+    </dialog>
 
     <script src="assets/app.js?v={{BUILD_VERSION}}"></script>
   </body>
