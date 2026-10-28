@@ -493,6 +493,92 @@ test('an area with too few attempts is not judged', () => {
 });
 
 /* ------------------------------------------------------------------ */
+/* the explanation gate                                                */
+/* ------------------------------------------------------------------ */
+
+test('the explanation stays shut until the question has been answered', () => {
+  const questions = app.state.questions;
+  const practice = app.state.practice;
+  const originalMode = app.state.mode;
+
+  // The case that used to leak: a question that has references, and whose
+  // explanation names the correct answer in its first line. It must not
+  // open before the student has answered.
+  const withReferences = questions.find(
+    (q) => api.isScorable(q) && (q.explanation.references || []).length > 0
+  );
+  assert.ok(withReferences, 'no scorable question with references to test');
+
+  try {
+    app.state.mode = 'practice';
+    practice.results.clear();
+
+    assert.equal(
+      api.canShowExplanation(withReferences),
+      false,
+      'the explanation opened before the question was answered'
+    );
+
+    practice.results.set(withReferences.id, {
+      selectedLabels: ['A'],
+      isCorrect: true,
+      graded: true,
+    });
+    assert.equal(
+      api.canShowExplanation(withReferences),
+      true,
+      'the explanation did not open after the question was answered'
+    );
+  } finally {
+    practice.results.clear();
+    app.state.mode = originalMode;
+  }
+});
+
+test('a question with no published key keeps its explanation open', () => {
+  const questions = app.state.questions;
+  const practice = app.state.practice;
+  const originalMode = app.state.mode;
+
+  try {
+    app.state.mode = 'practice';
+    practice.results.clear();
+
+    // A question with no key can never be graded, so it never becomes
+    // "answered". Its reference is the only teaching content it has, so
+    // the explanation must stay open.
+    const noKey = {
+      id: 999001,
+      type: 'single_choice',
+      answer: { labels: [] },
+      options: [{ label: 'A', text: 'Some option' }],
+      explanation: {
+        text: 'An explanation.',
+        references: ['https://learn.microsoft.com/en-us/azure/azure-sql/'],
+      },
+    };
+    assert.equal(api.isScorable(noKey), false, 'the synthetic question is scorable');
+    assert.equal(
+      api.canShowExplanation(noKey),
+      true,
+      'a question with no key lost its explanation'
+    );
+
+    // A lab task has no key either, and its walk-through is the answer.
+    const labTask = questions.find((q) => q.type === 'simulation');
+    assert.ok(labTask, 'no lab task in the bank');
+    assert.equal(
+      api.canShowExplanation(labTask),
+      true,
+      'a lab task lost its walk-through'
+    );
+  } finally {
+    practice.results.clear();
+    app.state.mode = originalMode;
+  }
+});
+
+/* ------------------------------------------------------------------ */
 /* the type filter                                                     */
 /* ------------------------------------------------------------------ */
 

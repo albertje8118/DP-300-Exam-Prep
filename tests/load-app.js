@@ -70,6 +70,7 @@ function appApi(context) {
     buildCategoryReport: context.buildCategoryReport,
     parseExamWeight: context.parseExamWeight,
     updateAnswerStateCounts: context.updateAnswerStateCounts,
+    canShowExplanation: context.canShowExplanation,
     questionTypesInOrder: context.questionTypesInOrder,
     // `TYPE_LABELS` is a top-level `const`, so it lives in the realm's
     // lexical scope rather than on the global object.

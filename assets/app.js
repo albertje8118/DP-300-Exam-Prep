@@ -461,11 +461,18 @@ function escapeRegExp(value) {
  * The text is copied node by node rather than through innerHTML, so a
  * question containing markup cannot inject anything into the page.
  */
-function setSearchableText(node, text, terms) {
-  node.textContent = '';
-  const source = text || '';
-  if (!terms.length || !source) {
-    node.textContent = source;
+/**
+ * Append text to a node, wrapping any search hit in a <mark>.
+ *
+ * Split out of setSearchableText so the markdown renderer can use it for
+ * every run of text it puts on the page.
+ */
+function appendSearchableText(node, source, terms) {
+  if (!source) {
+    return;
+  }
+  if (!terms.length) {
+    node.appendChild(document.createTextNode(source));
     return;
   }
   const pattern = terms.map(escapeRegExp).join('|');
@@ -488,6 +495,105 @@ function setSearchableText(node, text, terms) {
   }
   if (cursor < source.length) {
     node.appendChild(document.createTextNode(source.slice(cursor)));
+  }
+}
+
+function setSearchableText(node, text, terms) {
+  node.textContent = '';
+  const source = text || '';
+  if (!terms.length || !source) {
+    node.textContent = source;
+    return;
+  }
+  appendSearchableText(node, source, terms);
+}
+
+/* ------------------------------------------------------------------ */
+/* markdown for the explanation                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The inline markdown the explanation may use.
+ *
+ * A link is only matched when it is an http(s) URL, so a link to anything
+ * else stays plain text.
+ */
+const MARKDOWN_INLINE =
+  /(\*\*[^*]+\*\*)|(\*[^*]+\*)|(`[^`]+`)|(\[[^\]]+\])\((https?:\/\/[^)\s]+)\)/g;
+
+/**
+ * Render one line of markdown into a node.
+ *
+ * The explanation is written by a reviewer, so it is parsed into nodes
+ * rather than into HTML: every character that is not a recognised marker
+ * becomes a text node, so nothing in the text can inject markup.
+ */
+function renderMarkdownInline(node, text, terms) {
+  let cursor = 0;
+  let match;
+  MARKDOWN_INLINE.lastIndex = 0;
+  while ((match = MARKDOWN_INLINE.exec(text)) !== null) {
+    if (match.index > cursor) {
+      appendSearchableText(node, text.slice(cursor, match.index), terms);
+    }
+    const token = match[0];
+    if (token.startsWith('**')) {
+      const strong = document.createElement('strong');
+      appendSearchableText(strong, token.slice(2, -2), terms);
+      node.appendChild(strong);
+    } else if (token.startsWith('`')) {
+      const code = document.createElement('code');
+      appendSearchableText(code, token.slice(1, -1), terms);
+      node.appendChild(code);
+    } else if (token.startsWith('[')) {
+      const link = document.createElement('a');
+      link.href = match[5];
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      appendSearchableText(link, match[4].slice(1, -1), terms);
+      node.appendChild(link);
+    } else {
+      const em = document.createElement('em');
+      appendSearchableText(em, token.slice(1, -1), terms);
+      node.appendChild(em);
+    }
+    cursor = match.index + token.length;
+  }
+  if (cursor < text.length) {
+    appendSearchableText(node, text.slice(cursor), terms);
+  }
+}
+
+/**
+ * Render the explanation's markdown.
+ *
+ * Supported: paragraphs, `**bold**`, `*italic*`, `` `code` ``, `- ` bullets
+ * and `[text](url)` links. The references are rendered by the app itself
+ * below the explanation, so the text does not need to repeat them.
+ */
+function renderMarkdown(node, text, terms) {
+  node.textContent = '';
+  let list = null;
+  for (const rawLine of String(text || '').split('\n')) {
+    const line = rawLine.trim();
+    if (!line) {
+      continue;
+    }
+    const bullet = /^[-*]\s+(.*)$/.exec(line);
+    if (bullet) {
+      if (!list) {
+        list = document.createElement('ul');
+        node.appendChild(list);
+      }
+      const item = document.createElement('li');
+      renderMarkdownInline(item, bullet[1], terms);
+      list.appendChild(item);
+      continue;
+    }
+    list = null;
+    const paragraph = document.createElement('p');
+    renderMarkdownInline(paragraph, line, terms);
+    node.appendChild(paragraph);
   }
 }
 
@@ -2232,18 +2338,25 @@ function renderOptions(question) {
 /**
  * May the explanation for this question be opened?
  *
- * In practice it opens once the question has been answered, for a lab task,
- * or for a question with references - the reference is the only teaching
- * content an unanswerable question has. In the exam review everything is
- * open.
+ * A graded question's explanation opens once the student has answered it.
+ * The explanation names the correct answer in its first line, so opening it
+ * before the answer would hand the answer over.
+ *
+ * A question with no published key can never be graded, so it never becomes
+ * "answered" - for those, and for a lab task, the explanation and its
+ * references are the only teaching content there is, and they stay open.
+ *
+ * In the exam review everything is open.
  */
 function canShowExplanation(question) {
+  if (state.mode !== 'practice') {
+    return isExamReview();
+  }
+  if (isScorable(question)) {
+    return Boolean(getPracticeResult(question.id));
+  }
   const references = question.explanation.references || [];
-  return state.mode === 'practice'
-    ? Boolean(getPracticeResult(question.id)) ||
-      question.type === 'simulation' ||
-      references.length > 0
-    : isExamReview();
+  return question.type === 'simulation' || references.length > 0;
 }
 
 function renderExplanation(question) {
@@ -2269,7 +2382,7 @@ function renderExplanation(question) {
   const explanationBody = authoredNote
     ? `${explanationText}\n\nHow the published key was read: ${authoredNote}`
     : explanationText;
-  setSearchableText(el.explanationText, explanationBody, getSearchTerms());
+  renderMarkdown(el.explanationText, explanationBody, getSearchTerms());
 
   renderImages(el.explanationMedia, question.explanation.images || [], 'Explanation image');
 
