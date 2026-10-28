@@ -491,3 +491,59 @@ test('an area with too few attempts is not judged', () => {
     practice.results.clear();
   }
 });
+
+/* ------------------------------------------------------------------ */
+/* the type filter                                                     */
+/* ------------------------------------------------------------------ */
+
+test('the type filter offers every type the bank holds', () => {
+  const questions = app.state.questions;
+  const { counts, types } = api.questionTypesInOrder(questions);
+
+  // The filter used to list a fixed set of types, so a type the bank gained
+  // later was unreachable: the per-statement questions could not be filtered
+  // for at all. Every type the bank holds has to be offered.
+  const inBank = [...new Set(questions.map((q) => q.type))];
+  for (const type of inBank) {
+    assert.ok(types.includes(type), `the type filter does not offer ${type}`);
+  }
+
+  // The count on each option is the count in the bank.
+  for (const type of types) {
+    assert.equal(counts.get(type), questions.filter((q) => q.type === type).length);
+  }
+});
+
+test('no two question types share a name', () => {
+  const { types } = api.questionTypesInOrder(app.state.questions);
+  const names = types.map((type) => api.typeLabels[type] || type);
+
+  // Two entries with the same name and different counts made the filter
+  // unreadable: "Multiple choice (219)" and "Multiple choice (67)".
+  assert.equal(
+    new Set(names).size,
+    names.length,
+    `two question types share a name: ${names.join(', ')}`
+  );
+  assert.ok(
+    names.every((name) => name && name.trim()),
+    'a question type has no name'
+  );
+});
+
+test('filtering by type reaches the per-statement questions', () => {
+  const original = { ...app.state.filters };
+  try {
+    app.state.filters.type = 'statement';
+    const statements = api.getFilteredQuestions();
+    assert.equal(statements.length, 114);
+    assert.ok(statements.every((q) => q.type === 'statement'));
+
+    app.state.filters.type = 'multi_select';
+    const multi = api.getFilteredQuestions();
+    assert.equal(multi.length, 67);
+    assert.ok(multi.every((q) => q.type === 'multi_select'));
+  } finally {
+    Object.assign(app.state.filters, original);
+  }
+});

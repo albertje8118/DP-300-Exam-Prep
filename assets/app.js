@@ -30,12 +30,32 @@ const STORAGE = {
   theme: 'dp300.theme.v1',
 };
 
+/**
+ * How each question type is named.
+ *
+ * "Single answer" and "Multiple answers" are the exam's own words for a
+ * question with one correct option and a question with several. They used
+ * to be both called "Multiple choice", which left the type filter showing
+ * two entries with the same name and different counts - unreadable. These
+ * are the words the rest of the app already used: the selection-mode pill
+ * in index.html says "Single answer", and the README says "single-answer"
+ * and "multi-answer".
+ */
 const TYPE_LABELS = {
-  single_choice: 'Multiple choice',
-  multi_select: 'Multiple choice',
+  single_choice: 'Single answer',
+  multi_select: 'Multiple answers',
+  statement: 'Answer per statement',
   hotspot: 'Diagram question',
   simulation: 'Lab task',
 };
+
+/**
+ * The question types, in the order the type filter offers them.
+ *
+ * The order is the order a student meets them: one answer, several answers,
+ * one answer per statement, then the hands-on lab tasks.
+ */
+const TYPE_ORDER = ['single_choice', 'multi_select', 'statement', 'simulation'];
 
 const state = {
   bank: null,
@@ -1191,6 +1211,27 @@ const ANSWER_STATES = {
   },
 };
 
+/**
+ * The question types the bank actually contains, and how many of each.
+ *
+ * The type filter used to list a fixed set of types, so a type the bank
+ * gained later was unreachable: the 114 per-statement questions could not
+ * be filtered for at all. Counting what is really there means a type can
+ * never go missing from the filter again, and an unknown type is offered
+ * rather than dropped.
+ */
+function questionTypesInOrder(questions) {
+  const counts = new Map();
+  for (const question of questions) {
+    counts.set(question.type, (counts.get(question.type) || 0) + 1);
+  }
+  const types = [
+    ...TYPE_ORDER.filter((type) => counts.has(type)),
+    ...[...counts.keys()].filter((type) => !TYPE_ORDER.includes(type)),
+  ];
+  return { counts, types };
+}
+
 function buildFilterOptions() {
   const topics = state.bank.metadata.topics || [];
   el.filterTopic.innerHTML = '';
@@ -1218,20 +1259,16 @@ function buildFilterOptions() {
     el.filterCategory.appendChild(option);
   }
 
-  const types = ['single_choice', 'multi_select', 'hotspot', 'simulation'];
+  const { counts: typeCounts, types } = questionTypesInOrder(state.questions);
   el.filterType.innerHTML = '';
   const allTypes = document.createElement('option');
   allTypes.value = 'all';
   allTypes.textContent = 'All types';
   el.filterType.appendChild(allTypes);
   for (const type of types) {
-    const count = state.questions.filter((q) => q.type === type).length;
-    if (!count) {
-      continue;
-    }
     const option = document.createElement('option');
     option.value = type;
-    option.textContent = `${TYPE_LABELS[type]} (${count})`;
+    option.textContent = `${TYPE_LABELS[type] || type} (${typeCounts.get(type)})`;
     el.filterType.appendChild(option);
   }
 

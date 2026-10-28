@@ -51,6 +51,22 @@ questions need **Check Answer**. The explanation and the source references are
 one click away, and the navigator grid keeps every question you have reviewed
 colour-coded.
 
+The **type** filter names the four shapes the bank is built from, and the count
+on each one is the count in the bank:
+
+| Type | Count | What the student does |
+| --- | --- | --- |
+| **Single answer** | 219 | Picks one option. |
+| **Multiple answers** | 67 | Picks several; the question says how many. |
+| **Answer per statement** | 114 | Answers each statement on its own - every statement has to be right. |
+| **Lab task** | 22 | A hands-on walk-through; there is no answer to mark. |
+
+These are the exam's own words for the two multiple-choice shapes. They used to
+be both called *Multiple choice*, which left the filter showing two entries with
+the same name and different counts.
+
+![The type filter, showing Multiple answers selected](docs/filter-types-after.png)
+
 Below the filters sits the **progress report**, which answers the question the
 app used to leave open: *what am I actually bad at?* See
 [Study tools](#study-tools) below.
