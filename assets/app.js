@@ -957,6 +957,16 @@ function downloadTextFile(filename, text, mimeType) {
 /* An area needs a few attempts before its score means anything. */
 const REPORT_MIN_ATTEMPTS = 3;
 
+/*
+ * An area needs more than that before it is called weak.
+ *
+ * Three wrong answers in a row is not a verdict on a quarter of the
+ * exam, so the recommendation waits for more evidence than the score
+ * does: a row shows a percentage at three attempts, but the report only
+ * names an area to study at five.
+ */
+const REPORT_WEAK_ATTEMPTS = 5;
+
 /**
  * The exam weight of a category, as a single number.
  *
@@ -1030,12 +1040,78 @@ function buildCategoryReport() {
   });
 
   const judged = rows.filter((row) => row.judged);
-  // The weakest area is the one with the largest weighted gap.
-  const weakest = judged.length
-    ? judged.reduce((worst, row) => (row.priority > worst.priority ? row : worst))
+  // The weakest area is the one with the largest weighted gap - but only
+  // once there is enough evidence to call it weak. A row is judged at
+  // three attempts; the recommendation waits for five.
+  const candidates = rows.filter((row) => row.graded >= REPORT_WEAK_ATTEMPTS);
+  const weakest = candidates.length
+    ? candidates.reduce((worst, row) => (row.priority > worst.priority ? row : worst))
     : null;
 
   return { rows, weakest, judged };
+}
+
+/**
+ * The headline: how far through the bank the student is.
+ *
+ * The headline used to be a percentage - "Practice breakdown - 25%
+ * overall" - which put a score where a progress count belongs. Progress
+ * leads now, and the score follows on its own line underneath.
+ */
+function describePracticeHeadline(attempted, bankSize) {
+  return `Practice — ${attempted} of ${bankSize} attempted`;
+}
+
+/**
+ * The score line: how many of the attempts were right.
+ *
+ * A percentage off one or two questions is noise, so the count is shown
+ * on its own until there are enough attempts to stand behind it - the
+ * same rule the area rows follow. The headline was published without
+ * that guard, so the report could print a score from a single attempt
+ * while every area below it refused to.
+ */
+function describePracticeScore(graded, correct) {
+  const count = `${correct} of ${graded} correct so far`;
+  if (graded < REPORT_MIN_ATTEMPTS) {
+    return count;
+  }
+  return `${count} (${Math.round((correct / graded) * 100)}%)`;
+}
+
+/**
+ * One area's score: the percentage, with the count beside it.
+ *
+ * The count used to appear only while an area was too small to judge,
+ * so the number that mattered most was the one that vanished exactly
+ * when the sample was small.
+ */
+function describeAreaScore(row) {
+  if (row.accuracy === null) {
+    return row.attempted ? `not enough attempts (${row.attempted})` : 'not started';
+  }
+  if (!row.judged) {
+    // A percentage off one or two questions is noise, so the raw count is
+    // shown instead of a score the bank cannot support yet.
+    return `${row.correct} of ${row.graded} so far`;
+  }
+  return `${Math.round(row.accuracy * 100)}% (${row.correct} of ${row.graded})`;
+}
+
+/**
+ * The lead: which area to look at next.
+ *
+ * It is a lead, not a verdict. The app is naming the area with the
+ * largest weighted gap, and on a handful of attempts that is not much
+ * more than noise - so the wording says "looks weak" and keeps the count
+ * in front of the number.
+ */
+function describeWeakestArea(weakest) {
+  return (
+    `${weakest.shortName} looks weak — ${weakest.correct} of ${weakest.graded} correct so far. ` +
+    `It is ${weakest.weightLabel} of the exam, across ${weakest.total} question` +
+    `${weakest.total === 1 ? '' : 's'} in the bank.`
+  );
 }
 
 function renderProgressReport() {
@@ -1045,6 +1121,7 @@ function renderProgressReport() {
   }
 
   const report = buildCategoryReport();
+  const totalAttempted = report.rows.reduce((sum, row) => sum + row.attempted, 0);
   const totalGraded = report.rows.reduce((sum, row) => sum + row.graded, 0);
   const totalCorrect = report.rows.reduce((sum, row) => sum + row.correct, 0);
 
@@ -1055,23 +1132,24 @@ function renderProgressReport() {
   }
   el.progressReport.hidden = false;
 
-  const overall = Math.round((totalCorrect / totalGraded) * 100);
-  el.reportHeadline.textContent = `Practice breakdown — ${overall}% overall`;
-  el.reportTotals.textContent = `${totalGraded} graded of ${state.questions.length} questions`;
+  // Progress first, then the score. The headline used to carry a
+  // percentage and the line below it carried the count of questions
+  // answered, which read as a score and as progress at the same time.
+  el.reportHeadline.textContent = describePracticeHeadline(
+    totalAttempted,
+    state.questions.length
+  );
+  el.reportTotals.textContent = describePracticeScore(totalGraded, totalCorrect);
 
   if (report.weakest) {
     const weakest = report.weakest;
-    el.reportLead.textContent =
-      `Your weakest area is ${weakest.shortName}: ${Math.round(weakest.accuracy * 100)}% correct ` +
-      `on ${weakest.graded} graded question${weakest.graded === 1 ? '' : 's'} ` +
-      `(${weakest.correct} of ${weakest.graded}). It is ${weakest.weightLabel} of the exam, ` +
-      `across ${weakest.total} question${weakest.total === 1 ? '' : 's'} in the bank.`;
+    el.reportLead.textContent = describeWeakestArea(weakest);
     el.reportDrill.hidden = false;
     el.reportDrill.textContent = `Drill ${weakest.shortName}`;
     el.reportDrill.dataset.category = weakest.code;
   } else {
     el.reportLead.textContent =
-      `Answer ${REPORT_MIN_ATTEMPTS} questions in one area and the report will name the ` +
+      `Answer ${REPORT_WEAK_ATTEMPTS} questions in one area and the report will name the ` +
       'area to study next.';
     el.reportDrill.hidden = true;
     el.reportDrill.dataset.category = '';
@@ -1115,7 +1193,7 @@ function buildReportRow(row, weakest) {
           ? `not enough attempts yet, ${row.attempted} answered`
           : 'not started'
         : row.judged
-          ? `${Math.round(row.accuracy * 100)} percent correct on ${row.graded} graded questions`
+          ? `${Math.round(row.accuracy * 100)} percent correct, ${row.correct} of ${row.graded} answered`
           : `${row.correct} of ${row.graded} correct so far, not enough attempts to judge`
     }. Select this area.`
   );
@@ -1147,18 +1225,16 @@ function buildReportRow(row, weakest) {
 
   const score = document.createElement('span');
   score.className = 'report-score';
+  score.textContent = describeAreaScore(row);
+  if (row.accuracy === null || !row.judged) {
+    score.classList.add('muted');
+  }
   if (row.accuracy === null) {
-    score.textContent = row.attempted ? `not enough attempts (${row.attempted})` : 'not started';
-    score.classList.add('muted');
+    // Nothing to say beyond the attempt count.
   } else if (!row.judged) {
-    // A percentage off one or two questions is noise, so the raw count is
-    // shown instead of a score the bank cannot support yet.
-    score.textContent = `${row.correct}/${row.graded} so far`;
-    score.classList.add('muted');
-    score.title = `${REPORT_MIN_ATTEMPTS} graded questions are needed before this area is judged`;
+    score.title = `${REPORT_MIN_ATTEMPTS} answered questions are needed before this area is judged`;
   } else {
-    score.textContent = `${Math.round(row.accuracy * 100)}%`;
-    score.title = `${row.correct} of ${row.graded} graded questions correct`;
+    score.title = `${row.correct} of ${row.graded} answered questions correct`;
   }
 
   const weight = document.createElement('span');

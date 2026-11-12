@@ -68,6 +68,10 @@ function appApi(context) {
     getFilteredQuestions: context.getFilteredQuestions,
     getVisibleQuestions: context.getVisibleQuestions,
     buildCategoryReport: context.buildCategoryReport,
+    describePracticeHeadline: context.describePracticeHeadline,
+    describePracticeScore: context.describePracticeScore,
+    describeAreaScore: context.describeAreaScore,
+    describeWeakestArea: context.describeWeakestArea,
     parseExamWeight: context.parseExamWeight,
     updateAnswerStateCounts: context.updateAnswerStateCounts,
     canShowExplanation: context.canShowExplanation,
@@ -76,6 +80,9 @@ function appApi(context) {
     // `TYPE_LABELS` is a top-level `const`, so it lives in the realm's
     // lexical scope rather than on the global object.
     typeLabels: vm.runInContext('TYPE_LABELS', context),
+    // The report's two thresholds, for the same reason.
+    reportMinAttempts: vm.runInContext('REPORT_MIN_ATTEMPTS', context),
+    reportWeakAttempts: vm.runInContext('REPORT_WEAK_ATTEMPTS', context),
     shuffle: context.shuffle,
   };
 }
