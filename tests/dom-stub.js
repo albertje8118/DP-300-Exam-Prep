@@ -95,8 +95,16 @@ function createElement(tagName) {
       },
     },
     classNames: new Set(),
-    addEventListener() {},
-    removeEventListener() {},
+    addEventListener(type, handler) {
+      // The handlers are kept so that `click()` can fire them. Without this
+      // the stub could not exercise a button at all, and a button whose
+      // listener was never attached - or attached to the wrong element -
+      // would pass every test.
+      element.handlers[type] = handler;
+    },
+    removeEventListener(type) {
+      delete element.handlers[type];
+    },
     setAttribute(name, value) {
       element.attributes[name] = String(value);
       if (name === 'id') {
@@ -156,6 +164,13 @@ function createElement(tagName) {
     focus() {},
     blur() {},
     click() {
+      // A browser drops the event on a disabled control: the click is
+      // dispatched and never reaches the handler. The stub has to do the
+      // same, or a test would happily press a button a student cannot press
+      // and call the app's behaviour correct.
+      if (element.disabled) {
+        return;
+      }
       const handler = element.handlers && element.handlers.click;
       if (handler) {
         handler({ target: element, preventDefault() {}, stopPropagation() {} });

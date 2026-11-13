@@ -281,6 +281,35 @@ function isScorable(question) {
   );
 }
 
+/**
+ * Has the student answered everything this question asks for?
+ *
+ * A per-statement question needs one pick per statement. Its selection is
+ * padded to the number of statements, so the length of the selection cannot
+ * tell whether the question is finished - only the picks themselves can.
+ *
+ * This matters because grading locks the question: once an attempt is
+ * recorded the options are disabled and the answer cannot be changed. A
+ * half-answered question that could be graded would therefore be locked with
+ * a verdict the student never had the chance to earn.
+ */
+function isFullyAnswered(question, selected) {
+  if (isStatementQuestion(question)) {
+    const statements = question.statements || [];
+    return (
+      statements.length > 0 &&
+      statements.every((statement, index) => {
+        // A statement with nothing to pick cannot hold the student up.
+        if (!statement.options || !statement.options.length) {
+          return true;
+        }
+        return Boolean(selected[index]);
+      })
+    );
+  }
+  return selected.length > 0;
+}
+
 /** How many of the statements the student got right. */
 function statementScore(question, selected) {
   const statements = question.statements || [];
@@ -2985,7 +3014,7 @@ function renderQuestion() {
   el.checkButton.hidden = !(
     isPractice && (isMultiSelect(question) || isStatementQuestion(question))
   );
-  el.checkButton.disabled = Boolean(practiceResult) || !selected.length;
+  el.checkButton.disabled = Boolean(practiceResult) || !isFullyAnswered(question, selected);
 
   if (isPractice && practiceResult) {
     if (practiceResult.graded === false) {
@@ -3071,7 +3100,7 @@ function checkPracticeQuestion() {
   }
   const graded = isScorable(question);
   const selected = orderedSelection(question, getPracticeSelection(question.id));
-  if (!selected.length) {
+  if (!isFullyAnswered(question, selected)) {
     return;
   }
 
