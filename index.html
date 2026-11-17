@@ -54,12 +54,10 @@
     <div class="app-shell">
       <header class="topbar">
         <div class="brand-block">
-          <p class="eyebrow">Exam Prep</p>
           <h1>DP-300</h1>
           <p class="topbar-subtitle">Administering Relational Databases on Microsoft Azure</p>
           <p id="mode-description" class="topbar-copy">
-            Practice the extracted question bank with instant feedback, or switch to a
-            timed exam simulator.
+            The extracted question bank with instant feedback, or a timed exam simulator.
           </p>
         </div>
 
@@ -96,7 +94,17 @@
             aria-label="Open the question navigator"
             title="Open the question navigator"
           >
-            <span class="mobile-navigator-icon" aria-hidden="true">&#9776;</span>
+            <span class="mobile-navigator-icon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M4 7h16M4 12h16M4 17h16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </span>
             <span class="mobile-navigator-text">Questions</span>
           </button>
         </div>
@@ -107,11 +115,9 @@
       <main class="content-shell">
         <section id="question-panel" class="question-panel">
           <header class="toolbar">
-            <div>
-              <p id="session-label" class="eyebrow">Practice Bank</p>
-              <h2 id="question-title">Loading...</h2>
-            </div>
+            <h2 id="question-title">Loading...</h2>
             <div class="toolbar-actions">
+              <span id="session-label" class="pill muted">Practice Bank</span>
               <span id="question-position" class="pill">Question 0 / 0</span>
               <span id="selection-mode" class="pill muted">Single answer</span>
               <span id="question-kind" class="pill muted"></span>
@@ -156,24 +162,6 @@
             </div>
           </section>
 
-          <!-- Practice-mode progress report -->
-          <section id="progress-report" class="progress-report" hidden>
-            <header class="report-header">
-              <div>
-                <p class="eyebrow">Progress report</p>
-                <h3 id="report-headline">Practice breakdown</h3>
-              </div>
-              <p id="report-totals" class="report-totals"></p>
-            </header>
-            <p id="report-lead" class="report-lead"></p>
-            <div class="report-actions">
-              <button id="report-drill" class="solid-button small" type="button" hidden>
-                Drill this area
-              </button>
-            </div>
-            <div id="report-rows" class="report-rows"></div>
-          </section>
-
           <!-- Exam-mode blueprint -->
           <section id="exam-blueprint" class="exam-blueprint" hidden>
             <h3>Exam Blueprint</h3>
@@ -196,11 +184,27 @@
               </label>
               <label class="field">
                 <span class="field-label">Questions</span>
-                <input id="exam-count" class="select" type="number" min="10" max="120" step="5" value="60" />
+                <input
+                  id="exam-count"
+                  class="select"
+                  type="number"
+                  min="10"
+                  max="120"
+                  step="5"
+                  value="60"
+                />
               </label>
               <label class="field">
                 <span class="field-label">Duration (minutes)</span>
-                <input id="exam-duration" class="select" type="number" min="15" max="240" step="5" value="120" />
+                <input
+                  id="exam-duration"
+                  class="select"
+                  type="number"
+                  min="15"
+                  max="240"
+                  step="5"
+                  value="120"
+                />
               </label>
             </div>
             <p id="blueprint-summary" class="blueprint-summary"></p>
@@ -211,14 +215,31 @@
               <button id="scenario-toggle" class="scenario-toggle" type="button" aria-expanded="false">
                 <span class="scenario-badge">Case study</span>
                 <span id="scenario-title" class="scenario-name"></span>
-                <span class="scenario-chevron" aria-hidden="true">▸</span>
+                <span class="scenario-chevron" aria-hidden="true">
+                  <svg class="icon" viewBox="0 0 24 24" focusable="false">
+                    <path
+                      d="M9 5l7 7-7 7"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
               </button>
               <div id="scenario-body" class="scenario-body" hidden></div>
             </div>
 
-            <p id="question-text" class="question-text"></p>
+            <p id="question-text" class="question-text" tabindex="-1"></p>
             <div id="question-media" class="media-stack" hidden></div>
             <div id="options-list" class="options-list"></div>
+
+            <!-- The verdict sits directly under the options the student just
+                 chose. Anything that pushes it further down costs the product
+                 the one thing it is for. -->
+            <div id="feedback-banner" class="feedback-banner" role="status" aria-live="polite" hidden></div>
+
             <p id="question-note" class="question-note" hidden></p>
             <p id="keyboard-hint" class="keyboard-hint"></p>
 
@@ -251,7 +272,22 @@
             </div>
           </div>
 
-          <div id="feedback-banner" class="feedback-banner" role="status" aria-live="polite" hidden></div>
+          <!-- Practice-mode progress report. It sits below the question and
+               only appears once there is enough of it to be worth reading, so
+               it can never push the question or the verdict out of view. -->
+          <section id="progress-report" class="progress-report" hidden>
+            <header class="report-header">
+              <h3 id="report-headline">Practice breakdown</h3>
+              <p id="report-totals" class="report-totals"></p>
+            </header>
+            <p id="report-lead" class="report-lead"></p>
+            <div class="report-actions">
+              <button id="report-drill" class="solid-button small" type="button" hidden>
+                Drill this area
+              </button>
+            </div>
+            <div id="report-rows" class="report-rows"></div>
+          </section>
 
           <section id="explanation-panel" class="explanation-panel" hidden>
             <h3>Explanation</h3>
@@ -261,13 +297,16 @@
           </section>
         </section>
 
-        <section id="navigator-panel" class="navigator-panel">
+        <nav id="navigator-panel" class="navigator-panel" aria-label="Question navigator">
           <div class="navigator-header">
             <div class="navigator-heading">
-              <p class="eyebrow">Question Navigator</p>
               <h3 id="navigator-title">Browse All Questions</h3>
+              <p id="navigator-caption" class="navigator-caption"></p>
             </div>
             <div class="navigator-tools">
+              <button id="next-unanswered" class="ghost-button small" type="button">
+                Next unanswered
+              </button>
               <button
                 id="navigator-toggle"
                 class="navigator-toggle"
@@ -278,7 +317,18 @@
                 title="Collapse question navigator"
               >
                 <span class="navigator-toggle-label">Navigator</span>
-                <span class="navigator-toggle-icon" aria-hidden="true">&rsaquo;</span>
+                <span class="navigator-toggle-icon" aria-hidden="true">
+                  <svg class="icon" viewBox="0 0 24 24" focusable="false">
+                    <path
+                      d="M9 5l7 7-7 7"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
               </button>
               <button
                 id="nav-close"
@@ -287,16 +337,30 @@
                 aria-label="Close the question navigator"
                 title="Close the question navigator"
               >
-                <span aria-hidden="true">&times;</span>
+                <span aria-hidden="true">
+                  <svg class="icon" viewBox="0 0 24 24" focusable="false">
+                    <path
+                      d="M6 6l12 12M18 6L6 18"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </span>
               </button>
             </div>
-            <p id="navigator-caption" class="navigator-caption"></p>
           </div>
+
+          <!-- The colour key. Practice mode used to promise a colour code
+               without ever saying what the colours were. -->
+          <ul id="navigator-legend" class="navigator-legend" hidden></ul>
+
           <div id="navigator-content" class="navigator-content">
-            <div id="question-grid" class="question-grid"></div>
             <div id="exam-results" class="exam-results" hidden></div>
+            <div id="question-grid" class="question-grid"></div>
           </div>
-        </section>
+        </nav>
       </main>
 
       <footer class="app-footer">
@@ -328,7 +392,7 @@
     <div id="print-report" class="print-report" aria-hidden="true"></div>
 
     <!-- The export dialog: what the student sees before printing. -->
-    <dialog id="export-dialog" class="export-dialog">
+    <dialog id="export-dialog" class="export-dialog" aria-labelledby="export-title">
       <div class="export-inner">
         <header class="export-header">
           <h2 id="export-title">Practice report</h2>
@@ -349,6 +413,23 @@
         <div class="export-actions">
           <button id="export-print" class="solid-button" type="button">Print / Save as PDF</button>
           <button id="export-csv" class="ghost-button" type="button">Download CSV</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Anything irreversible asks first. -->
+    <dialog id="confirm-dialog" class="export-dialog" aria-labelledby="confirm-title">
+      <div class="export-inner">
+        <header class="export-header">
+          <h2 id="confirm-title">Are you sure?</h2>
+          <button id="confirm-close" class="ghost-button small" type="button">Close</button>
+        </header>
+        <p id="confirm-summary" class="export-summary"></p>
+        <div id="confirm-breakdown" class="export-breakdown"></div>
+        <p id="confirm-note" class="export-note"></p>
+        <div class="export-actions">
+          <button id="confirm-accept" class="solid-button danger" type="button">Confirm</button>
+          <button id="confirm-cancel" class="ghost-button" type="button">Cancel</button>
         </div>
       </div>
     </dialog>

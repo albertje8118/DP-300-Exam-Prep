@@ -189,13 +189,23 @@ const el = {
   feedbackBanner: document.getElementById('feedback-banner'),
   navigatorTitle: document.getElementById('navigator-title'),
   navigatorCaption: document.getElementById('navigator-caption'),
+  navigatorLegend: document.getElementById('navigator-legend'),
   navigatorToggle: document.getElementById('navigator-toggle'),
   navigatorPanel: document.getElementById('navigator-panel'),
   navClose: document.getElementById('nav-close'),
   navBackdrop: document.getElementById('nav-backdrop'),
   mobileNavigator: document.getElementById('mobile-navigator'),
+  nextUnanswered: document.getElementById('next-unanswered'),
   questionGrid: document.getElementById('question-grid'),
   examResults: document.getElementById('exam-results'),
+  confirmDialog: document.getElementById('confirm-dialog'),
+  confirmTitle: document.getElementById('confirm-title'),
+  confirmClose: document.getElementById('confirm-close'),
+  confirmSummary: document.getElementById('confirm-summary'),
+  confirmBreakdown: document.getElementById('confirm-breakdown'),
+  confirmNote: document.getElementById('confirm-note'),
+  confirmAccept: document.getElementById('confirm-accept'),
+  confirmCancel: document.getElementById('confirm-cancel'),
   loadingOverlay: document.getElementById('loading-overlay'),
   loadingText: document.getElementById('loading-text'),
   footerCount: document.getElementById('footer-count'),
@@ -236,14 +246,23 @@ function formatTime(seconds) {
  * rather than under it.
  */
 function scrollToQuestionTop() {
-  const panel = el.questionPanel;
-  if (!panel) {
+  // The anchor is the question itself, not the panel it sits in. The panel
+  // also holds the toolbar, the filter bar and the progress report, so
+  // scrolling to its top left the question below the fold.
+  const anchor = el.questionText;
+  if (!anchor) {
     return;
   }
+  // An open case study is above the question text; landing on the question
+  // would cut the study in half.
+  const scenario = document.getElementById('scenario-panel');
+  const scenarioOpen =
+    scenario && !scenario.hidden && el.scenarioBody && !el.scenarioBody.hidden;
+  const target = scenarioOpen ? el.scenarioToggle : anchor;
   const header = document.querySelector('.topbar');
   const sticky = header && getComputedStyle(header).position === 'sticky';
   const offset = sticky ? header.getBoundingClientRect().height : 0;
-  const top = panel.getBoundingClientRect().top + window.scrollY - offset - 8;
+  const top = target.getBoundingClientRect().top + window.scrollY - offset - 8;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({ top: Math.max(0, top), behavior: reduced ? 'auto' : 'smooth' });
 }
@@ -692,18 +711,43 @@ function buildAttemptRow(question, result) {
   };
 }
 
-/** The per-category breakdown of a set of report rows. */
-function buildReportBreakdown(rows) {
+/**
+ * Everything the session could have covered.
+ *
+ * An exam session covers the paper; a practice session covers the bank.
+ */
+function reportPopulation() {
+  return state.mode === 'exam' ? state.exam.questions : state.questions;
+}
+
+/**
+ * The per-category breakdown of a set of report rows.
+ *
+ * `rows` are the questions the student touched. `population` is everything
+ * the session could have covered - the paper in an exam, the bank in
+ * practice. The two are different numbers, and the record has to say which
+ * is which: a candidate who answered six of sixty had a printed table that
+ * said sixty attempted.
+ */
+function buildReportBreakdown(rows, population) {
   const categories = (state.bank?.metadata?.categories || []).map((category) => ({
     code: category.code,
     name: category.short_name,
     weightLabel: category.weight || '',
     weight: parseExamWeight(category.weight),
+    inPaper: 0,
     attempted: 0,
     graded: 0,
     correct: 0,
   }));
   const byCode = new Map(categories.map((category) => [category.code, category]));
+
+  for (const question of population || []) {
+    const bucket = byCode.get(question.category && question.category.code);
+    if (bucket) {
+      bucket.inPaper += 1;
+    }
+  }
 
   for (const row of rows) {
     const question = state.byId.get(row.id);
@@ -712,7 +756,9 @@ function buildReportBreakdown(rows) {
     if (!bucket) {
       continue;
     }
-    bucket.attempted += 1;
+    if (row.verdict !== 'not answered') {
+      bucket.attempted += 1;
+    }
     if (row.verdict === 'correct' || row.verdict === 'wrong') {
       bucket.graded += 1;
       if (row.verdict === 'correct') {
@@ -759,7 +805,7 @@ function describeReportSession(rows) {
 function renderExportDialog() {
   const rows = collectReportRows();
   const session = describeReportSession(rows);
-  const breakdown = buildReportBreakdown(rows);
+  const breakdown = buildReportBreakdown(rows, reportPopulation());
 
   el.exportTitle.textContent =
     state.mode === 'exam' ? 'Exam report' : 'Practice report';
@@ -772,7 +818,15 @@ function renderExportDialog() {
 
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  for (const heading of ['Exam category', 'Weight', 'Attempted', 'Graded', 'Correct', 'Score']) {
+  for (const heading of [
+    'Exam category',
+    'Weight',
+    'In paper',
+    'Answered',
+    'Graded',
+    'Correct',
+    'Score',
+  ]) {
     const th = document.createElement('th');
     th.textContent = heading;
     headRow.appendChild(th);
@@ -788,6 +842,7 @@ function renderExportDialog() {
     tr.appendChild(name);
     for (const value of [
       row.weightLabel,
+      String(row.inPaper),
       String(row.attempted),
       String(row.graded),
       String(row.correct),
@@ -830,7 +885,7 @@ function openExportDialog() {
 function buildPrintReport() {
   const rows = collectReportRows();
   const session = describeReportSession(rows);
-  const breakdown = buildReportBreakdown(rows);
+  const breakdown = buildReportBreakdown(rows, reportPopulation());
   const student = (state.ui.studentName || '').trim();
 
   el.printReport.innerHTML = '';
@@ -857,14 +912,21 @@ function buildPrintReport() {
     : `${session.accuracy}% — ${session.correct} of ${session.graded} graded questions correct`;
   el.printReport.appendChild(score);
 
-  el.printReport.appendChild(buildPrintTable('By exam category', ['Exam category', 'Weight', 'Attempted', 'Graded', 'Correct', 'Score'], breakdown.map((row) => [
-    row.name,
-    row.weightLabel,
-    String(row.attempted),
-    String(row.graded),
-    String(row.correct),
-    row.accuracy === null ? '—' : `${row.accuracy}%`,
-  ])));
+  el.printReport.appendChild(
+    buildPrintTable(
+      'By exam category',
+      ['Exam category', 'Weight', 'In paper', 'Answered', 'Graded', 'Correct', 'Score'],
+      breakdown.map((row) => [
+        row.name,
+        row.weightLabel,
+        String(row.inPaper),
+        String(row.attempted),
+        String(row.graded),
+        String(row.correct),
+        row.accuracy === null ? '—' : `${row.accuracy}%`,
+      ])
+    )
+  );
 
   if (!rows.length) {
     const empty = document.createElement('p');
@@ -1154,8 +1216,10 @@ function renderProgressReport() {
   const totalGraded = report.rows.reduce((sum, row) => sum + row.graded, 0);
   const totalCorrect = report.rows.reduce((sum, row) => sum + row.correct, 0);
 
-  if (!totalGraded) {
-    // Nothing to report yet: the panel would only say "no data".
+  // The report only earns its place once there is enough of it to read. A
+  // panel of empty bars after the first answer pushed the question and the
+  // verdict down the page.
+  if (totalAttempted < REPORT_WEAK_ATTEMPTS) {
     el.progressReport.hidden = true;
     return;
   }
@@ -1216,7 +1280,7 @@ function buildReportRow(row, weakest) {
   button.dataset.category = row.code;
   button.setAttribute(
     'aria-label',
-    `${row.shortName}: ${
+    `${row.shortName}${row.weightLabel ? `, worth ${row.weightLabel} of the exam` : ''}: ${
       row.accuracy === null
         ? row.attempted
           ? `not enough attempts yet, ${row.attempted} answered`
@@ -1226,6 +1290,9 @@ function buildReportRow(row, weakest) {
           : `${row.correct} of ${row.graded} correct so far, not enough attempts to judge`
     }. Select this area.`
   );
+  if (row.weightLabel) {
+    button.title = `${row.shortName} is worth ${row.weightLabel} of the exam.`;
+  }
 
   const name = document.createElement('span');
   name.className = 'report-name';
@@ -2109,6 +2176,28 @@ function clearFeedback() {
   delete el.feedbackBanner.dataset.type;
 }
 
+/**
+ * Bring the verdict into view.
+ *
+ * The verdict sits directly under the options the student just chose, which
+ * puts it at the bottom of the screen when they answered the first option.
+ * A verdict nobody can see is a verdict that did not happen.
+ */
+function revealFeedback() {
+  if (!el.feedbackBanner || el.feedbackBanner.hidden) {
+    return;
+  }
+  const box = el.feedbackBanner.getBoundingClientRect();
+  if (box.top >= 0 && box.bottom <= window.innerHeight) {
+    return;
+  }
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.feedbackBanner.scrollIntoView({
+    behavior: reduced ? 'auto' : 'smooth',
+    block: 'nearest',
+  });
+}
+
 function renderSummaryCards(items) {
   el.summaryStrip.innerHTML = '';
   for (const item of items) {
@@ -2180,6 +2269,14 @@ function renderImages(container, images, altPrefix) {
     img.src = image.path;
     img.alt = `${altPrefix} ${index + 1}`;
     img.loading = 'lazy';
+    // The bank knows the size of every picture, so the page does not jump
+    // when a lazy image arrives.
+    if (image.width) {
+      img.width = image.width;
+    }
+    if (image.height) {
+      img.height = image.height;
+    }
     container.appendChild(img);
   }
 }
@@ -2207,10 +2304,15 @@ function renderScenario(question) {
   }
 
   el.scenarioBody.innerHTML = '';
+  scenarioImageIndex = 0;
   for (const section of scenario.sections) {
     el.scenarioBody.appendChild(renderScenarioSection(section));
   }
 }
+
+/* The exhibits are numbered across the whole case study, not per section -
+   three pictures that all say "exhibit 1" tell a screen reader nothing. */
+let scenarioImageIndex = 0;
 
 function renderScenarioSection(section) {
   const wrapper = document.createElement('div');
@@ -2236,12 +2338,21 @@ function renderScenarioSection(section) {
   if (images.length) {
     const stack = document.createElement('div');
     stack.className = 'scenario-images';
-    for (const [index, image] of images.entries()) {
+    for (const image of images) {
+      scenarioImageIndex += 1;
       const img = document.createElement('img');
       img.className = 'rendered-image';
       img.src = image.path;
-      img.alt = `Case study exhibit ${index + 1}`;
+      img.alt = section.heading
+        ? `Case study exhibit ${scenarioImageIndex}: ${section.heading}`
+        : `Case study exhibit ${scenarioImageIndex}`;
       img.loading = 'lazy';
+      if (image.width) {
+        img.width = image.width;
+      }
+      if (image.height) {
+        img.height = image.height;
+      }
       stack.appendChild(img);
     }
     wrapper.appendChild(stack);
@@ -2267,6 +2378,22 @@ function renderStatements(question) {
   const reviewResult = getExamReviewResult(question);
   const locked = Boolean(practiceResult) || isExamReview();
   const statements = question.statements || [];
+
+  // The rows are rebuilt from scratch, so the button that had focus has to be
+  // found again afterwards - otherwise the keyboard user is dropped on the
+  // page body every time they answer. A statement question repeats the same
+  // labels ("True", "False") in every row, so the row index is captured as
+  // well; the label alone would restore focus to the wrong statement.
+  const focused = document.activeElement;
+  let focusedStatementIndex = -1;
+  let focusedLabel = null;
+  if (focused && focused.classList.contains('statement-option')) {
+    const focusedRow = focused.closest('.statement-row');
+    if (focusedRow && focusedRow.parentElement === el.optionsList) {
+      focusedStatementIndex = Array.from(el.optionsList.children).indexOf(focusedRow);
+    }
+    focusedLabel = focused.dataset.label;
+  }
 
   el.optionsList.innerHTML = '';
   el.optionsList.hidden = false;
@@ -2303,7 +2430,13 @@ function renderStatements(question) {
         }
       }
 
-      button.disabled = locked;
+      // A locked option stays focusable on purpose: the student has to read
+      // the options they got wrong, and a disabled button cannot hold focus.
+      // The state travels in aria-disabled instead.
+      button.disabled = false;
+      if (locked) {
+        button.setAttribute('aria-disabled', 'true');
+      }
 
       const label = document.createElement('span');
       label.className = 'option-label';
@@ -2327,6 +2460,18 @@ function renderStatements(question) {
     row.appendChild(choices);
     el.optionsList.appendChild(row);
   });
+
+  if (focusedLabel !== null && focusedStatementIndex >= 0) {
+    const row = el.optionsList.children[focusedStatementIndex];
+    if (row) {
+      const restored = Array.from(row.querySelectorAll('.statement-option')).find(
+        (button) => button.dataset.label === focusedLabel
+      );
+      if (restored) {
+        restored.focus();
+      }
+    }
+  }
 }
 
 /** Pick - or clear - the answer for one statement. */
@@ -2358,6 +2503,15 @@ function renderOptions(question) {
   const correctLabels = new Set(question.answer.labels);
   const locked = Boolean(practiceResult) || isExamReview();
   const ordered = Boolean(question.answer && question.answer.ordered);
+
+  // The list is rebuilt from scratch, so the button that had focus has to be
+  // found again afterwards - otherwise the keyboard user is dropped on the
+  // page body every time they answer. The label is read before the list is
+  // cleared, because clearing it is what loses the focus.
+  const focusedLabel =
+    document.activeElement && document.activeElement.classList.contains('option-button')
+      ? document.activeElement.dataset.label
+      : null;
 
   el.optionsList.innerHTML = '';
 
@@ -2403,7 +2557,13 @@ function renderOptions(question) {
       }
     }
 
-    button.disabled = locked;
+    // A locked option stays focusable on purpose: the student has to read
+    // the options they got wrong, and a disabled button cannot hold focus.
+    // The state travels in aria-disabled instead.
+    button.disabled = false;
+    if (locked) {
+      button.setAttribute('aria-disabled', 'true');
+    }
 
     const label = document.createElement('span');
     label.className = 'option-label';
@@ -2437,6 +2597,12 @@ function renderOptions(question) {
         img.src = image.path;
         img.alt = `Option ${option.label} image ${index + 1}`;
         img.loading = 'lazy';
+        if (image.width) {
+          img.width = image.width;
+        }
+        if (image.height) {
+          img.height = image.height;
+        }
         media.appendChild(img);
       }
       content.appendChild(media);
@@ -2445,6 +2611,15 @@ function renderOptions(question) {
     button.append(label, content);
     button.addEventListener('click', () => handleOptionClick(question, option.label));
     el.optionsList.appendChild(button);
+  }
+
+  if (focusedLabel) {
+    const restored = el.optionsList.querySelector(
+      `.option-button[data-label="${focusedLabel}"]`
+    );
+    if (restored) {
+      restored.focus();
+    }
   }
 }
 
@@ -2645,6 +2820,10 @@ const NAV_CHIP_CLASSES = ['current', 'correct', 'wrong', 'answered', 'flagged', 
 const navChips = {
   ids: [],
   buttons: [],
+  /* Which chip the keyboard is on. The grid is one tab stop, and the arrow
+     keys move from there - otherwise a keyboard user had to walk through 422
+     buttons to reach the export field. */
+  focusIndex: 0,
 };
 
 /**
@@ -2730,6 +2909,135 @@ function paintNavigatorChip(button, question, index) {
   // too - a screen reader hears "12", not "12, answered, correct".
   button.setAttribute('aria-label', `Question ${index + 1}, ${words}`);
   button.setAttribute('aria-current', current ? 'true' : 'false');
+  button.tabIndex = index === navChips.focusIndex ? 0 : -1;
+}
+
+/** How many chips sit in one row of the grid, read from the layout. */
+function navChipsPerRow() {
+  const buttons = navChips.buttons;
+  if (buttons.length < 2) {
+    return Math.max(1, buttons.length);
+  }
+  const top = buttons[0].offsetTop;
+  let count = 0;
+  for (const button of buttons) {
+    if (button.offsetTop !== top) {
+      break;
+    }
+    count += 1;
+  }
+  return Math.max(1, count);
+}
+
+/**
+ * Move the keyboard through the grid.
+ *
+ * The grid is a roving tabindex: one chip is in the tab order and the arrow
+ * keys move from there. The home and end keys jump to the ends.
+ */
+function moveNavFocus(event) {
+  const keys = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+  if (!keys.includes(event.key)) {
+    return;
+  }
+  const buttons = navChips.buttons;
+  if (!buttons.length) {
+    return;
+  }
+  const from = buttons.indexOf(document.activeElement);
+  if (from === -1) {
+    return;
+  }
+  event.preventDefault();
+  // The arrow keys also move between questions. Inside the grid they belong
+  // to the grid, so the page-level shortcut must not see them.
+  event.stopPropagation();
+
+  const perRow = navChipsPerRow();
+  let to = from;
+  if (event.key === 'ArrowRight') {
+    to = from + 1;
+  } else if (event.key === 'ArrowLeft') {
+    to = from - 1;
+  } else if (event.key === 'ArrowDown') {
+    to = from + perRow;
+  } else if (event.key === 'ArrowUp') {
+    to = from - perRow;
+  } else if (event.key === 'Home') {
+    to = 0;
+  } else {
+    to = buttons.length - 1;
+  }
+  to = Math.max(0, Math.min(buttons.length - 1, to));
+
+  buttons[from].tabIndex = -1;
+  buttons[to].tabIndex = 0;
+  navChips.focusIndex = to;
+  buttons[to].focus();
+}
+
+/**
+ * The colour key.
+ *
+ * The chips carry their state in colour, so practice mode needs to say what
+ * the colours are. The exam review had a key; practice mode did not.
+ */
+function renderNavigatorLegend() {
+  el.navigatorLegend.innerHTML = '';
+  const items =
+    state.mode === 'exam' && isExamReview()
+      ? [
+          ['correct', 'Correct'],
+          ['wrong', 'Wrong'],
+          ['flagged', 'Flagged'],
+          ['noted', 'Has a note'],
+        ]
+      : [
+          ['answered', 'Answered'],
+          ['correct', 'Correct'],
+          ['wrong', 'Wrong'],
+          ['flagged', 'Flagged'],
+          ['noted', 'Has a note'],
+        ];
+  for (const [className, label] of items) {
+    const item = document.createElement('li');
+    item.className = 'legend-item';
+    const swatch = document.createElement('span');
+    swatch.className = `legend-swatch ${className}`;
+    swatch.setAttribute('aria-hidden', 'true');
+    const text = document.createElement('span');
+    text.textContent = label;
+    item.append(swatch, text);
+    el.navigatorLegend.appendChild(item);
+  }
+  el.navigatorLegend.hidden = items.length === 0;
+}
+
+/**
+ * Jump to the next question the student has not answered yet.
+ *
+ * With four hundred and twenty-two questions in the bank, scanning the grid
+ * for the next gap is the thing a candidate does most often.
+ */
+function goToNextUnanswered() {
+  const questions = getVisibleQuestions();
+  if (!questions.length) {
+    return;
+  }
+  const isAnswered = (question) =>
+    state.mode === 'exam'
+      ? state.exam.answers.has(question.id)
+      : Boolean(getPracticeResult(question.id));
+
+  const total = questions.length;
+  for (let step = 1; step <= total; step += 1) {
+    const index = (state.currentIndex + step) % total;
+    if (!isAnswered(questions[index])) {
+      openQuestionByIndex(index);
+      return;
+    }
+  }
+  setFeedback('Every question in the current filter has an answer.', 'info');
 }
 
 /** Build the chips. Only called when the visible set of questions changes. */
@@ -2737,6 +3045,9 @@ function buildNavigator(questions) {
   el.questionGrid.innerHTML = '';
   navChips.ids = questions.map((question) => question.id);
   navChips.buttons = [];
+  // The roving tabindex starts on the question being shown, so the first Tab
+  // into the grid lands somewhere the student recognises.
+  navChips.focusIndex = Math.min(state.currentIndex, questions.length - 1);
 
   for (const [index, question] of questions.entries()) {
     const chip = document.createElement('button');
@@ -2744,6 +3055,7 @@ function buildNavigator(questions) {
     chip.className = 'nav-chip';
     chip.textContent = String(index + 1);
     chip.dataset.index = String(index);
+    chip.tabIndex = -1;
     el.questionGrid.appendChild(chip);
     navChips.buttons.push(chip);
   }
@@ -2760,16 +3072,18 @@ function renderNavigator() {
       state.mode === 'exam'
         ? 'Start a simulator session to generate a random exam.'
         : 'No questions match the current filters.';
+    renderNavigatorLegend();
     el.examResults.hidden = true;
     return;
   }
 
   el.navigatorCaption.textContent =
     state.mode === 'practice'
-      ? 'Jump across the filtered bank. Reviewed questions stay color-coded.'
+      ? 'Jump across the filtered bank.'
       : isExamReview()
-        ? 'Review your submitted exam. Green is correct, red is wrong, gold is flagged.'
+        ? 'Your submitted exam. The key below says what each colour means.'
         : 'Track answered and flagged questions while the timer runs.';
+  renderNavigatorLegend();
 
   const sameSet =
     navChips.buttons.length === questions.length &&
@@ -2806,13 +3120,24 @@ function renderExamResults() {
   scoreLine.textContent = `${score}%`;
   el.examResults.appendChild(scoreLine);
 
+  // The exam is scored out of a thousand, and the verdict is the one thing
+  // the student came for.
+  const scaled = Math.round(score * 10);
+  const verdict = document.createElement('p');
+  verdict.className = 'score-verdict';
+  verdict.dataset.verdict = scaled >= 700 ? 'pass' : 'fail';
+  verdict.textContent = scaled >= 700 ? 'Pass' : 'Below the pass mark';
+  el.examResults.appendChild(verdict);
+
   const sub = document.createElement('p');
   sub.className = 'score-sub';
   sub.textContent =
     `${correct} of ${graded.length} graded questions correct. ` +
-    `${ungraded} question${ungraded === 1 ? '' : 's'} ` +
-    `${ungraded === 1 ? 'is' : 'are'} diagram or lab content and cannot be scored from this source. ` +
-    `Microsoft's passing score for DP-300 is 700 / 1000.`;
+    `${scaled} / 1000 - Microsoft's passing score for DP-300 is 700 / 1000.` +
+    (ungraded
+      ? ` ${ungraded} question${ungraded === 1 ? ' is' : 's are'} diagram or lab ` +
+        'content and cannot be scored from this source.'
+      : '');
   el.examResults.appendChild(sub);
 
   const byTopic = new Map();
@@ -2911,7 +3236,7 @@ function renderTopControls() {
 
   el.modeDescription.textContent =
     state.mode === 'practice'
-      ? 'Practice mode shows the full bank with instant scoring, explanations and image-backed questions. Filter by topic and exam category.'
+      ? 'The whole bank, with instant scoring and an explanation for every answer.'
       : 'Exam simulator follows the DP-300 shape: 60 questions in 120 minutes, case studies first, then lab tasks, then the rest.';
 
   el.filterBar.hidden = state.mode !== 'practice';
@@ -2923,6 +3248,9 @@ function renderTopControls() {
   el.startExam.hidden = state.mode !== 'exam' || examRunning || isExamReview();
   el.newExam.hidden = state.mode !== 'exam' || !isExamReview();
   el.submitExam.hidden = state.mode !== 'exam' || !examRunning;
+  // While the paper is running the header holds its place, so the clock
+  // cannot scroll out of sight behind a long question.
+  document.body.classList.toggle('exam-running', examRunning);
   el.examClock.hidden = state.mode !== 'exam';
   el.examClock.textContent = formatTime(state.exam.remainingSeconds);
   el.examClock.classList.toggle('danger', state.exam.remainingSeconds <= 300);
@@ -2990,7 +3318,10 @@ function renderQuestion() {
     : examRunning
       ? 'Timed Exam Session'
       : 'Exam Review';
-  el.questionTitle.textContent = `Question ${state.currentIndex + 1}`;
+  // The heading names the subject of the question. It used to read
+  // "Question 12", which the position pill beside it already said.
+  el.questionTitle.textContent =
+    question.topic_label || `Question ${state.currentIndex + 1}`;
   el.questionPosition.textContent = `Question ${state.currentIndex + 1} / ${questions.length}`;
   el.selectionMode.textContent = isStatementQuestion(question)
     ? 'Answer every statement'
@@ -3000,6 +3331,12 @@ function renderQuestion() {
   el.questionKind.textContent = question.authored
     ? 'Reconstructed'
     : TYPE_LABELS[question.type] || question.type;
+  // The pill carries a word the student has never been taught, so it says
+  // what it means when it is pointed at.
+  el.questionKind.title = question.authored
+    ? 'Reconstructed: this question was rebuilt from the exam dump - the options ' +
+      'and the answer key were transcribed by hand.'
+    : `Question type: ${el.questionKind.textContent}.`;
   setSearchableText(el.questionText, question.question.text, getSearchTerms());
   renderImages(el.questionMedia, question.question.images || [], 'Question image');
   renderQuestionNote(question);
@@ -3042,6 +3379,7 @@ function renderQuestion() {
             : `Wrong answer. The correct answer is ${formatAnswer(question)}.`,
         practiceResult.isCorrect ? 'success' : 'error'
       );
+      revealFeedback();
     }
   } else if (examRunning) {
     setFeedback(
@@ -3156,7 +3494,9 @@ function handleAnswerKey(label) {
     }
   }
 
-  if (!target || target.disabled) {
+  // A locked option is marked with aria-disabled rather than the disabled
+  // attribute, so that it can still be read - and focused - after grading.
+  if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true') {
     return;
   }
   target.click();
@@ -3203,6 +3543,33 @@ function moveQuestion(offset) {
   state.currentIndex = next;
   renderQuestion();
   scrollToQuestionTop();
+  focusQuestionHeading();
+}
+
+/** Go to a question by its place in the visible list. */
+function openQuestionByIndex(index) {
+  const questions = getVisibleQuestions();
+  if (index < 0 || index >= questions.length) {
+    return;
+  }
+  state.currentIndex = index;
+  navChips.focusIndex = index;
+  renderQuestion();
+  scrollToQuestionTop();
+  focusQuestionHeading();
+}
+
+/**
+ * Put the keyboard on the question the student has just moved to.
+ *
+ * The question card is rebuilt on every change, so whatever had focus is
+ * gone. A sighted student sees where they are; a keyboard user had to guess.
+ */
+function focusQuestionHeading() {
+  if (!el.questionText) {
+    return;
+  }
+  el.questionText.focus({ preventScroll: true });
 }
 
 function clearSelection() {
@@ -3348,6 +3715,82 @@ function startExamTimer() {
   }, 1000);
 }
 
+/**
+ * Ask before doing something that cannot be undone.
+ *
+ * The dialog names the action, counts what is about to happen, and says what
+ * it costs - a student should not have to guess whether the button they just
+ * pressed threw their work away.
+ */
+function askToConfirm({ title, summary, note, acceptLabel, cancelLabel, onAccept }) {
+  el.confirmTitle.textContent = title;
+  el.confirmSummary.textContent = summary;
+  el.confirmNote.textContent = note || '';
+  el.confirmNote.hidden = !note;
+  el.confirmBreakdown.innerHTML = '';
+  el.confirmAccept.textContent = acceptLabel;
+  el.confirmCancel.textContent = cancelLabel || 'Cancel';
+  el.confirmAccept.onclick = () => {
+    el.confirmDialog.close();
+    onAccept();
+  };
+  if (typeof el.confirmDialog.showModal === 'function') {
+    el.confirmDialog.showModal();
+  } else {
+    el.confirmDialog.setAttribute('open', '');
+  }
+  el.confirmAccept.focus();
+}
+
+/**
+ * Submitting an exam grades it and locks the answers.
+ *
+ * One click used to throw away a hundred and twenty minutes of work.
+ */
+function requestSubmitExam() {
+  const total = state.exam.questions.length;
+  const answered = state.exam.answers.size;
+  const unanswered = total - answered;
+  const flagged = state.exam.flagged.size;
+
+  const parts = [`${answered} of ${total} answered`];
+  if (unanswered) {
+    parts.push(`${unanswered} still unanswered`);
+  }
+  if (flagged) {
+    parts.push(`${flagged} flagged for review`);
+  }
+
+  askToConfirm({
+    title: 'Submit this exam?',
+    summary: parts.join(' · '),
+    note: unanswered
+      ? 'Once submitted the exam is graded and the answers are locked. The ' +
+        `${unanswered} unanswered question${unanswered === 1 ? '' : 's'} count as wrong.`
+      : 'Once submitted the exam is graded and the answers are locked.',
+    acceptLabel: 'Submit exam',
+    cancelLabel: 'Keep working',
+    onAccept: () => finishExam('submitted'),
+  });
+}
+
+/** Resetting clears every answer, every note and every report. */
+function requestResetPractice() {
+  const results = state.practice.results.size;
+  const notes = state.practice.notes.size;
+  askToConfirm({
+    title: 'Reset your practice progress?',
+    summary:
+      results || notes
+        ? `${results} answered question${results === 1 ? '' : 's'} and ${notes} ` +
+          `note${notes === 1 ? '' : 's'} will be cleared.`
+        : 'Nothing has been answered yet.',
+    note: 'This cannot be undone.',
+    acceptLabel: 'Reset progress',
+    onAccept: resetProgress,
+  });
+}
+
 function finishExam(status) {
   stopExamTimer();
   state.exam.status = status;
@@ -3411,10 +3854,10 @@ el.nextButton.addEventListener('click', () => moveQuestion(1));
 el.clearSelection.addEventListener('click', () => clearSelection());
 el.flagQuestion.addEventListener('click', () => toggleFlag());
 el.checkButton.addEventListener('click', () => checkPracticeQuestion());
-el.resetProgress.addEventListener('click', () => resetProgress());
+el.resetProgress.addEventListener('click', () => requestResetPractice());
 el.startExam.addEventListener('click', () => startExamSession());
 el.newExam.addEventListener('click', () => startExamSession(true));
-el.submitExam.addEventListener('click', () => finishExam('submitted'));
+el.submitExam.addEventListener('click', () => requestSubmitExam());
 el.toggleExplanation.addEventListener('click', () => toggleExplanation());
 el.scenarioToggle.addEventListener('click', () => toggleScenario());
 el.navigatorToggle.addEventListener('click', () =>
@@ -3425,6 +3868,12 @@ el.mobileNavigator.addEventListener('click', () =>
 );
 el.navClose.addEventListener('click', () => setNavigatorOpen(false));
 el.navBackdrop.addEventListener('click', () => setNavigatorOpen(false));
+el.nextUnanswered.addEventListener('click', () => goToNextUnanswered());
+el.confirmClose.addEventListener('click', () => el.confirmDialog.close());
+el.confirmCancel.addEventListener('click', () => el.confirmDialog.close());
+
+/* The navigator grid is one tab stop; the arrow keys move through it. */
+el.questionGrid.addEventListener('keydown', moveNavFocus);
 el.themeToggle.addEventListener('click', () => cycleTheme());
 el.copyLink.addEventListener('click', () => copyQuestionLink());
 
@@ -3509,6 +3958,7 @@ el.questionGrid.addEventListener('click', (event) => {
     return;
   }
   state.currentIndex = index;
+  navChips.focusIndex = index;
   renderQuestion();
   scrollToQuestionTop();
   // On a phone the grid lives in a bottom sheet - jump and dismiss.
