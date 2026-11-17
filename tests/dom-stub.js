@@ -161,6 +161,29 @@ function createElement(tagName) {
     closest() {
       return null;
     },
+    // The app scrolls the question and the verdict into view, which asks
+    // the element where it is. The stub has no layout, so every element
+    // sits at the origin with no size - enough for the scroll maths to
+    // run, and the scroll itself is recorded nowhere because the tests
+    // assert on content, not on position.
+    getBoundingClientRect() {
+      return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 };
+    },
+    scrollIntoView() {},
+    // The confirmation and export panels are <dialog>s in the page; the
+    // stub element stands in for one, so it answers open/close quietly.
+    showModal() {
+      element.open = true;
+    },
+    close() {
+      element.open = false;
+    },
+    contains(node) {
+      if (node === element) {
+        return true;
+      }
+      return element.children.some((child) => child.contains && child.contains(node));
+    },
     focus() {},
     blur() {},
     click() {
@@ -313,6 +336,15 @@ function createSandbox(bank) {
       addListener() {},
       removeListener() {},
     }),
+    // The app scrolls the question and the verdict into view. The stub has
+    // no layout, so it reports a fixed viewport at rest and records the
+    // scroll nowhere - the tests assert on content, not on position.
+    innerHeight: 900,
+    innerWidth: 1440,
+    scrollY: 0,
+    scrollX: 0,
+    scrollTo() {},
+    getComputedStyle: () => ({ position: 'static', getPropertyValue: () => '' }),
     history: {
       replaceState(_state, _title, url) {
         if (typeof url === 'string' && url.startsWith('#')) {

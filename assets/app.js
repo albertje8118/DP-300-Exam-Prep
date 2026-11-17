@@ -1216,10 +1216,12 @@ function renderProgressReport() {
   const totalGraded = report.rows.reduce((sum, row) => sum + row.graded, 0);
   const totalCorrect = report.rows.reduce((sum, row) => sum + row.correct, 0);
 
-  // The report only earns its place once there is enough of it to read. A
-  // panel of empty bars after the first answer pushed the question and the
-  // verdict down the page.
-  if (totalAttempted < REPORT_WEAK_ATTEMPTS) {
+  // The report earns its place once the student has attempted anything: the
+  // headline leads with progress, so even one answer deserves to be counted.
+  // Before the first answer the panel would only be empty bars. The score
+  // line and the weak-area verdict keep their own evidence thresholds
+  // (REPORT_MIN_ATTEMPTS and REPORT_WEAK_ATTEMPTS) further down.
+  if (!totalAttempted) {
     el.progressReport.hidden = true;
     return;
   }
