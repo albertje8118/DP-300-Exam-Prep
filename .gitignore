@@ -8,6 +8,7 @@ __pycache__/
 *.py[cod]
 .venv/
 node_modules/
+.impeccable/
 
 # Nothing in this folder is generated at runtime - the bank and the
 # images are committed so GitHub Pages can serve them directly.
