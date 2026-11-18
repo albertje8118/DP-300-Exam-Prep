@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
-      content="DP-300 (Administering Relational Databases on Microsoft Azure) exam simulator and practice bank."
+      content="DP-300 (Administering Microsoft Azure SQL Solutions) exam simulator and practice bank."
     />
     <title>DP-300 Exam Prep</title>
     <!-- Resolve the theme before the first paint, so a student on a dark
@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="assets/styles.css?v={{BUILD_VERSION}}" />
     <link
       rel="icon"
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230f6cbd'/><text x='16' y='22' font-size='16' font-family='Segoe UI' font-weight='700' fill='white' text-anchor='middle'>D3</text></svg>"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%232a4464'/><text x='16' y='22' font-size='16' font-family='Segoe UI' font-weight='700' fill='white' text-anchor='middle'>D3</text></svg>"
     />
   </head>
   <body>
@@ -55,7 +55,7 @@
       <header class="topbar">
         <div class="brand-block">
           <h1>DP-300</h1>
-          <p class="topbar-subtitle">Administering Relational Databases on Microsoft Azure</p>
+          <p class="topbar-subtitle">Administering Microsoft Azure SQL Solutions</p>
           <p id="mode-description" class="topbar-copy">
             The extracted question bank with instant feedback, or a timed exam simulator.
           </p>
@@ -73,10 +73,14 @@
 
         <div class="command-strip">
           <button id="theme-toggle" class="ghost-button small theme-toggle" type="button">
-            <span id="theme-toggle-label">Theme: Auto</span>
+            <span id="theme-toggle-icon" class="theme-toggle-icon" aria-hidden="true"></span>
+            <span id="theme-toggle-label">Auto</span>
           </button>
           <button id="export-open" class="ghost-button small" type="button">Report</button>
-          <span id="exam-clock" class="pill accent" hidden>120:00</span>
+          <div class="clock-block">
+            <span class="clock-label" aria-hidden="true">Time remaining</span>
+            <span id="exam-clock" class="pill accent" hidden>120:00</span>
+          </div>
           <span id="exam-warning" class="exam-warning" role="alert" hidden></span>
           <button id="reset-progress" class="ghost-button" type="button">Reset Practice</button>
           <button id="start-exam" class="solid-button" type="button">Start Exam</button>
@@ -210,7 +214,7 @@
             <p id="blueprint-summary" class="blueprint-summary"></p>
           </section>
 
-          <article>
+          <article class="question-paper">
             <div id="scenario-panel" class="scenario-panel" hidden>
               <button id="scenario-toggle" class="scenario-toggle" type="button" aria-expanded="false">
                 <span class="scenario-badge">Case study</span>

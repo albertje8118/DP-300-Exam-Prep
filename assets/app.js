@@ -127,6 +127,7 @@ const el = {
   selectionMode: document.getElementById('selection-mode'),
   questionKind: document.getElementById('question-kind'),
   themeToggle: document.getElementById('theme-toggle'),
+  themeToggleIcon: document.getElementById('theme-toggle-icon'),
   themeToggleLabel: document.getElementById('theme-toggle-label'),
   examClock: document.getElementById('exam-clock'),
   examWarning: document.getElementById('exam-warning'),
@@ -1898,11 +1899,25 @@ function applyTheme() {
   const theme = effectiveTheme(state.theme);
   document.documentElement.setAttribute('data-theme', theme);
   // The button stays compact - it shares a strip with the exam controls -
-  // so the glyph carries the theme and the tooltip carries the detail.
-  const glyph = state.theme === 'auto' ? '◐' : state.theme === 'light' ? '☀' : '☾';
+  // so a drawn icon carries the theme and the tooltip carries the detail.
+  // The icons speak the same stroke language as the rest of the chrome.
+  const icons = {
+    auto:
+      '<svg class="icon" viewBox="0 0 24 24" focusable="false">' +
+      '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.75"/>' +
+      '<path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
+    light:
+      '<svg class="icon" viewBox="0 0 24 24" focusable="false">' +
+      '<circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.75"/>' +
+      '<path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>',
+    dark:
+      '<svg class="icon" viewBox="0 0 24 24" focusable="false">' +
+      '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>',
+  };
   const label =
     state.theme === 'auto' ? 'Auto' : state.theme === 'light' ? 'Light' : 'Dark';
-  el.themeToggleLabel.textContent = `${glyph} ${label}`;
+  el.themeToggleIcon.innerHTML = icons[state.theme] || icons.auto;
+  el.themeToggleLabel.textContent = label;
   el.themeToggle.setAttribute(
     'aria-label',
     `Theme: ${label}. Activate to switch to the next theme.`
@@ -2113,6 +2128,11 @@ function planExam(force = false) {
  *  1. Pick 1-2 random case studies and take *every* question in them.
  *  2. Fill part of the remainder with lab tasks (Topic 5).
  *  3. Fill the rest with miscellaneous questions (Topic 6).
+ *
+ * The sections keep the real exam's order: case studies first, then lab
+ * tasks, then the filler. Randomness lives inside each section, never
+ * across them - a paper that interleaves them breaks the blueprint's
+ * promise and the way a case study is meant to be read.
  */
 function buildExam(force = false) {
   const plan = planExam(force);
@@ -2147,7 +2167,7 @@ function buildExam(force = false) {
   const misc = [...answerable, ...diagramOnly].slice(0, remaining);
 
   return {
-    questions: shuffle([...scenarioQuestions, ...labTasks, ...misc]),
+    questions: [...scenarioQuestions, ...labTasks, ...misc],
     scenarios: plan.scenarios,
   };
 }
@@ -2190,13 +2210,32 @@ function revealFeedback() {
     return;
   }
   const box = el.feedbackBanner.getBoundingClientRect();
-  if (box.top >= 0 && box.bottom <= window.innerHeight) {
+  // "Inside the viewport" is not "visible": the sticky header covers the top
+  // of the screen and the action bar covers the bottom (sticky on desktop,
+  // fixed on phones). The verdict has to land in the strip between them.
+  const header = document.querySelector('.topbar');
+  const topInset = header ? header.getBoundingClientRect().bottom : 0;
+  let bottomInset = 0;
+  for (const bar of document.querySelectorAll('.actions-row, .actions-primary')) {
+    const position = getComputedStyle(bar).position;
+    if (position === 'sticky' || position === 'fixed') {
+      bottomInset = Math.max(bottomInset, bar.getBoundingClientRect().height);
+    }
+  }
+  const visibleBottom = window.innerHeight - bottomInset;
+  let delta = 0;
+  if (box.bottom > visibleBottom) {
+    delta = box.bottom - visibleBottom + 8;
+  } else if (box.top < topInset) {
+    delta = box.top - topInset - 8;
+  }
+  if (!delta) {
     return;
   }
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  el.feedbackBanner.scrollIntoView({
+  window.scrollTo({
+    top: Math.max(0, window.scrollY + delta),
     behavior: reduced ? 'auto' : 'smooth',
-    block: 'nearest',
   });
 }
 
@@ -2215,6 +2254,22 @@ function renderSummaryCards(items) {
     value.textContent = item.value;
 
     card.append(label, value);
+
+    // A figure with a natural denominator carries a status bar under it, the
+    // way the real exam draws progress per section. The bar is decoration
+    // for the number above it, so it stays out of the accessibility tree.
+    if (item.bar && item.bar.max > 0) {
+      const bar = document.createElement('span');
+      bar.className = 'summary-bar';
+      bar.setAttribute('aria-hidden', 'true');
+      const fill = document.createElement('span');
+      fill.className = 'summary-bar-fill';
+      const pct = Math.max(0, Math.min(100, Math.round((item.bar.value / item.bar.max) * 100)));
+      fill.style.width = `${pct}%`;
+      bar.appendChild(fill);
+      card.appendChild(bar);
+    }
+
     el.summaryStrip.appendChild(card);
   }
 }
@@ -2230,9 +2285,17 @@ function updateSummary() {
     const accuracy = graded.length ? Math.round((correct / graded.length) * 100) : 0;
     renderSummaryCards([
       { label: 'In filter', value: String(questions.length) },
-      { label: 'Answered', value: String(results.length) },
+      {
+        label: 'Answered',
+        value: String(results.length),
+        bar: { value: results.length, max: questions.length },
+      },
       { label: 'Correct', value: String(correct) },
-      { label: 'Accuracy', value: graded.length ? `${accuracy}%` : '-' },
+      {
+        label: 'Accuracy',
+        value: graded.length ? `${accuracy}%` : '-',
+        bar: graded.length ? { value: accuracy, max: 100 } : null,
+      },
     ]);
     return;
   }
@@ -2246,19 +2309,24 @@ function updateSummary() {
     const correct = graded.filter((q) => getExamReviewResult(q)?.isCorrect).length;
     const score = graded.length ? Math.round((correct / graded.length) * 100) : 0;
     renderSummaryCards([
-      { label: 'Exam Questions', value: String(total) },
+      { label: 'Questions', value: String(total) },
       { label: 'Graded', value: String(graded.length) },
-      { label: 'Score', value: `${score}%` },
+      { label: 'Score', value: `${score}%`, bar: { value: score, max: 100 } },
       { label: 'Flagged', value: String(flagged) },
     ]);
     return;
   }
 
+  // The countdown lives in the header's clock block; repeating it here as a
+  // fourth figure would crowd the status bars the exam header is built around.
   renderSummaryCards([
-    { label: 'Exam Questions', value: String(total || state.exam.settings.questionCount) },
-    { label: 'Answered', value: String(answered) },
+    { label: 'Questions', value: String(total || state.exam.settings.questionCount) },
+    {
+      label: 'Answered',
+      value: String(answered),
+      bar: { value: answered, max: total || state.exam.settings.questionCount },
+    },
     { label: 'Flagged', value: String(flagged) },
-    { label: 'Time Left', value: formatTime(state.exam.remainingSeconds) },
   ]);
 }
 
@@ -2399,6 +2467,8 @@ function renderStatements(question) {
 
   el.optionsList.innerHTML = '';
   el.optionsList.hidden = false;
+  // Each statement takes a single answer, so the rows carry radio markers.
+  el.optionsList.classList.remove('multi');
 
   statements.forEach((statement, index) => {
     const row = document.createElement('div');
@@ -2516,6 +2586,9 @@ function renderOptions(question) {
       : null;
 
   el.optionsList.innerHTML = '';
+  // The marker shape follows the selection mode, as it does in the real
+  // exam: a circle for one answer, a box for several.
+  el.optionsList.classList.toggle('multi', isMultiSelect(question));
 
   // Some questions carry option letters but no option text: the choices
   // themselves live in the attached diagram. Rendering four empty buttons
@@ -3253,7 +3326,10 @@ function renderTopControls() {
   // While the paper is running the header holds its place, so the clock
   // cannot scroll out of sight behind a long question.
   document.body.classList.toggle('exam-running', examRunning);
-  el.examClock.hidden = state.mode !== 'exam';
+  // The countdown exists only while the paper is running. The blueprint
+  // states the duration in words, and the review screen is a score report -
+  // a frozen clock there is noise, and it crowds the header's status bars.
+  el.examClock.hidden = state.mode !== 'exam' || !examRunning;
   el.examClock.textContent = formatTime(state.exam.remainingSeconds);
   el.examClock.classList.toggle('danger', state.exam.remainingSeconds <= 300);
   // The warning stays up for as long as the exam is running - the clock
@@ -3293,6 +3369,7 @@ function renderQuestion() {
     renderImages(el.questionMedia, [], 'Question image');
     el.optionsList.innerHTML = '';
     el.optionsList.hidden = true;
+    el.optionsList.classList.remove('multi');
     el.questionNote.hidden = true;
     el.questionNotes.hidden = true;
     el.prevButton.disabled = true;

@@ -1,7 +1,8 @@
 # DP-300 Exam Prep
 
 A browser-based practice bank and exam simulator for **Microsoft DP-300 —
-Administering Relational Databases on Microsoft Azure**.
+Administering Microsoft Azure SQL Solutions** (formerly "Administering
+Relational Databases on Microsoft Azure").
 
 The question bank is extracted from the source PDF and shipped as static
 JSON, so the whole app runs in the browser with no server, no build step

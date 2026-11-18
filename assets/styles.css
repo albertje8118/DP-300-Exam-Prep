@@ -1,100 +1,106 @@
 /* DP-300 Exam Prep
-   Design language follows the COMPTIA Server+ renderer: warm gradient page
-   background, frosted panels, pill controls and a numbered navigator grid.
-   The palette is re-tuned towards Azure blue for this exam. */
+   The exam room, rebuilt. This sheet renders the app in the visual language
+   of the current Microsoft certification exam interface (Pearson VUE,
+   Microsoft_ReplacementUI_v7): a white window, navy hotlight, square corners,
+   Segoe UI, a bordered question paper with lettered option rows, and a header
+   that carries the section status bars and the countdown. Every colour is a
+   token below, so the dark theme is a token swap, not a second stylesheet.
+   Evidence: the official exam sandbox's own stylesheet and DOM, captured in
+   the content workshop's research/exam-ui-reference folder. */
 
-/* Every color in this sheet is composed from the tokens below, so a dark
-   theme is a token swap rather than a second stylesheet. The `-rgb` triplets
-   are consumed as `rgb(var(--token-rgb) / <alpha>)`, which keeps every tint in
-   the sheet expressible while letting the dark theme re-tint it. */
 :root {
   color-scheme: light;
 
-  --surface-rgb: 255 255 255;
-  --border-rgb: 24 42 68;
-  --accent-rgb: 15 108 189;
-  --muted-rgb: 90 103 121;
-  --warning-rgb: 154 91 19;
-  --error-rgb: 184 68 58;
-  --success-rgb: 47 143 87;
-  --shadow-rgb: 28 45 70;
-  --overlay-rgb: 18 28 44;
-  --code-bg-rgb: 240 244 250;
+  /* The exam's own palette. */
+  --window: #ffffff;
+  --window-rgb: 255 255 255;
+  --ink: #323130;
+  --ink-rgb: 50 49 48;
+  --hotlight: #2a4464;
+  --hotlight-rgb: 42 68 100;
+  --on-hotlight: #ffffff;
+  --tb-gray: #f4f3f5;
+  --cs-gray: #5a5a5a;
+  --cs-gray-rgb: 90 90 90;
+  --base-gray: #a2a2a2;
+  --track-gray: #b3b3b3;
+  --paper-border: #d4d4d4;
+  --form-gray: #f5f5f5;
+  --form-hover: #e8e8e8;
+  --focus: #5f91ec;
+  --marker-border: #919191;
+  --question-header: #121212;
+  --preexam-bg: #f3f2f1;
 
-  --page-bg: radial-gradient(circle at 12% 8%, #d8e8f7 0%, #e6ecf4 30%, #e9e4f2 62%, #dfe6f5 100%);
-  --panel-bg: rgb(var(--surface-rgb) / 0.86);
-  --panel-border: rgb(var(--border-rgb) / 0.12);
-  --text-main: #16202e;
-  --text-muted: #5a6779;
-  --text-invert: #ffffff;
-  --accent: #0f6cbd;
-  --accent-strong: #0a4f8a;
-  /* The colour of text that sits on a filled accent surface. The dark theme
-     needs dark text here, because its accent is too light to carry white. */
-  --on-accent: #ffffff;
-  --on-danger: #ffffff;
-  --accent-soft: rgb(var(--accent-rgb) / 0.12);
-  --azure: #0078d4;
+  /* State colours sit on top of the exam palette only where they carry
+     meaning: the practice verdict, the flag, the low-time warning. */
+  --success: #107c10;
+  --success-rgb: 16 124 16;
+  --success-bg: #dff6dd;
+  --success-border: #107c10;
+  --success-text: #0e6b0e;
+  --error: #a4262c;
+  --error-rgb: 164 38 44;
+  --error-bg: #fde7e9;
+  --error-border: #a4262c;
+  --error-text: #8e1f26;
   --warning: #9a5b13;
-  --option-bg: rgb(var(--surface-rgb) / 0.86);
-  --option-border: rgb(var(--border-rgb) / 0.12);
-  --success-bg: #d8f3e0;
-  --success-border: #2f8f57;
-  --success: #1c6b42;
-  --error-bg: #fce0dd;
-  --error-border: #b8443a;
-  --error-text: #97362d;
-  --danger-solid: #a84336;
-  --danger-strong: #8d3329;
-  --surface-solid: #ffffff;
-  --shadow: 0 22px 60px rgb(var(--shadow-rgb) / 0.14);
-  --radius: 22px;
+  --warning-rgb: 154 91 19;
+  --warning-bg: #fff4ce;
+  --warning-border: #d9a441;
+
+  --shadow: 4px 4px 4px rgb(0 0 0 / 0.2);
+  --overlay: rgb(0 0 0 / 0.5);
+
+  /* Drawn icons, one stroke weight. Masks take currentColor so the arrows
+     follow the button text through hover inversion and the theme swap. */
+  --arrow-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M10 3l-5 5 5 5' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --arrow-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 3l5 5-5 5' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.5 3.5L13 5' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
-/* Dark theme. The app sets `data-theme="dark"` on <html> - from the student's
-   choice, or from `prefers-color-scheme` when the choice is "auto" - so this
-   block is the single source of truth for the dark palette. */
+/* Dark theme: the exam's own dark-mode values. The app sets data-theme on
+   <html> from the student's choice or the system preference. */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --surface-rgb: 30 41 58;
-  --border-rgb: 148 170 200;
-  --accent-rgb: 96 178 240;
-  --muted-rgb: 156 172 192;
-  --warning-rgb: 224 168 92;
-  --error-rgb: 240 130 120;
-  --success-rgb: 106 204 140;
-  --shadow-rgb: 4 8 14;
-  --overlay-rgb: 6 10 16;
-  --code-bg-rgb: 22 30 42;
+  --window: #202020;
+  --window-rgb: 32 32 32;
+  --ink: #ffffff;
+  --ink-rgb: 255 255 255;
+  --hotlight: #75b6e7;
+  --hotlight-rgb: 117 182 231;
+  --on-hotlight: #091f2c;
+  --tb-gray: #404040;
+  --cs-gray: #d2d2d2;
+  --cs-gray-rgb: 210 210 210;
+  --base-gray: #757575;
+  --track-gray: #404040;
+  --paper-border: #505050;
+  --form-gray: #262937;
+  --form-hover: #32364a;
+  --focus: #75b6e7;
+  --marker-border: #d2d2d2;
+  --question-header: #ffffff;
+  --preexam-bg: #091f2c;
 
-  --page-bg: radial-gradient(circle at 12% 8%, #16243a 0%, #111b2b 34%, #171a2e 64%, #101c2c 100%);
-  --panel-bg: rgb(var(--surface-rgb) / 0.92);
-  --panel-border: rgb(var(--border-rgb) / 0.22);
-  --text-main: #e8eef6;
-  --text-muted: #9db0c6;
-  --text-invert: #ffffff;
-  --accent: #4aa3e0;
-  /* Bright enough to carry text on the dark surfaces, and to sit on a filled
-     accent surface with dark text on top of it. */
-  --accent-strong: #7fc3f0;
-  --on-accent: #0f172a;
-  --on-danger: #ffffff;
-  --accent-soft: rgb(var(--accent-rgb) / 0.16);
-  --azure: #4aa3e0;
+  --success: #6ccb5f;
+  --success-rgb: 108 203 95;
+  --success-bg: rgb(108 203 95 / 0.14);
+  --success-border: #6ccb5f;
+  --success-text: #9fd98f;
+  --error: #f1707b;
+  --error-rgb: 241 112 123;
+  --error-bg: rgb(241 112 123 / 0.14);
+  --error-border: #f1707b;
+  --error-text: #f5a3ab;
   --warning: #e0a85c;
-  --option-bg: rgb(var(--surface-rgb) / 0.92);
-  --option-border: rgb(var(--border-rgb) / 0.22);
-  --success-bg: rgb(var(--success-rgb) / 0.18);
-  --success-border: rgb(var(--success-rgb) / 0.55);
-  --success: #6acc8c;
-  --error-bg: rgb(var(--error-rgb) / 0.18);
-  --error-border: rgb(var(--error-rgb) / 0.55);
-  --error-text: #f7a89f;
-  --danger-solid: #b8453a;
-  --danger-strong: #98362c;
-  --surface-solid: #1e293a;
-  --shadow: 0 22px 60px rgb(var(--shadow-rgb) / 0.5);
+  --warning-rgb: 224 168 92;
+  --warning-bg: rgb(224 168 92 / 0.14);
+  --warning-border: rgb(224 168 92 / 0.55);
+
+  --shadow: 4px 4px 4px rgb(0 0 0 / 0.5);
+  --overlay: rgb(0 0 0 / 0.6);
 }
 
 * {
@@ -110,144 +116,145 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Segoe UI", "Bahnschrift", "Trebuchet MS", system-ui, sans-serif;
-  color: var(--text-main);
-  background: var(--page-bg);
-  background-attachment: fixed;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system,
+    BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+  font-size: 16px;
+  line-height: 1.25;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: var(--window);
 }
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   margin: 0;
+  font-weight: 700;
+  color: var(--question-header);
 }
 
 a {
-  color: var(--accent);
+  color: var(--hotlight);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  color: var(--ink);
+}
+
+/* The parts of the page the browser draws also belong to the exam room. */
+::selection {
+  background: var(--hotlight);
+  color: var(--on-hotlight);
+}
+
+body {
+  caret-color: var(--hotlight);
+  scrollbar-width: thin;
+  scrollbar-color: var(--base-gray) var(--tb-gray);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--tb-gray);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--base-gray);
+  border: 2px solid var(--tb-gray);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .app-shell {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  gap: 16px;
-  padding: 18px;
-  max-width: 1500px;
-  margin: 0 auto;
 }
 
-/* ---------- Top bar ---------- */
-
-.topbar,
-.question-panel,
-.navigator-panel {
-  background: var(--panel-bg);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
+/* ---------- Header: the exam's instrument cluster ----------
+   Three zones on one row: the exam identity on the left, the status figures
+   with their progress bars in the middle, the countdown and commands on the
+   right. It stays put while the paper scrolls, exactly like the exam. */
 
 .topbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) auto minmax(0, 1.1fr) auto;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 18px;
-  padding: 18px 22px;
+  gap: 12px 16px;
+  padding: 14px 24px;
+  background: var(--window);
+  border-bottom: 1px solid var(--paper-border);
 }
 
 .brand-block {
+  order: 1;
   min-width: 0;
 }
 
 .topbar h1 {
-  font-size: 1.7rem;
-  letter-spacing: -0.01em;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  letter-spacing: 0;
 }
 
 .topbar-subtitle {
   margin: 2px 0 0;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--accent-strong);
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--cs-gray);
 }
 
+/* The exam header carries no prose. The mode tabs and the subtitle say what
+   this screen is; the description paragraph stays in the DOM for the mode
+   switch to update, but it does not compete with the question. */
 .topbar-copy {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  line-height: 1.45;
-  max-width: 46rem;
+  display: none;
 }
 
-/* The kicker is gone on purpose: the heading carries its own weight, and a
-   label above it only made the eye read two headings instead of one. The
-   context it used to carry now lives in the meta row beside the heading. */
-
-.summary-strip {
+.mode-switch {
+  order: 2;
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* The summary reads as a row of figures, not a row of cards: a card inside
-   the frosted panel would be a card inside a card. */
-.summary-card {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 88px;
-  padding: 2px 16px 2px 0;
-}
-
-.summary-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.summary-value {
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.mode-switch,
-.command-strip {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-/* The command strip sits next to the mode switch, so its buttons start at
-   the left of their column instead of floating away from everything. */
-.command-strip {
-  justify-content: flex-start;
+  gap: 0;
 }
 
 .mode-button {
-  border: 1px solid rgb(var(--border-rgb) / 0.14);
-  background: rgb(var(--surface-rgb) / 0.66);
-  color: var(--text-main);
-  border-radius: 999px;
-  padding: 10px 16px;
+  border: 1px solid var(--paper-border);
+  background: var(--window);
+  color: var(--ink);
+  border-radius: 0;
+  padding: 8px 14px;
   font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  transition: background 120ms ease-out, color 120ms ease-out;
 }
 
-/* The active tab keeps its filled colour on hover. The old rule matched
-   more deeply than `.mode-button.active`, so hovering the selected tab
-   painted white text on a white background. */
+.mode-button + .mode-button {
+  border-left: 0;
+}
+
 .mode-button:not(.active):hover:not(:disabled) {
-  background: rgb(var(--surface-rgb) / 0.95);
+  background: var(--form-hover);
 }
 
 .mode-button.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+  background: var(--hotlight);
+  border-color: var(--hotlight);
+  color: var(--on-hotlight);
 }
 
 /* The short label is only used on phones, where the full one does not fit. */
@@ -256,31 +263,141 @@ a {
   display: none;
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  font-size: 0.86rem;
+/* Status figures: a label, a number, and - where the number has a natural
+   denominator - the exam's status bar underneath. This is the header's
+   signature: progress drawn the way the real exam draws it. */
+.summary-strip {
+  order: 3;
+  /* 276px = the exam card row (3 x 80 + 2 x 18). A larger basis pushes the
+     command strip onto a second row at 1280; a smaller one buys nothing. */
+  flex: 1 1 276px;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 80px;
+}
+
+.summary-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cs-gray);
   font-weight: 600;
   white-space: nowrap;
 }
 
-.pill.muted {
-  background: rgb(var(--muted-rgb) / 0.13);
-  color: var(--text-muted);
+.summary-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
-.pill.accent {
-  background: rgb(var(--warning-rgb) / 0.15);
-  color: var(--warning);
+.summary-bar {
+  display: block;
+  width: 100%;
+  height: 8px;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: var(--track-gray);
+  overflow: hidden;
 }
 
-.pill.danger {
-  background: rgb(var(--error-rgb) / 0.15);
+:root[data-theme='dark'] .summary-bar {
+  outline: 1px solid var(--hotlight);
+  outline-offset: -1px;
+}
+
+.summary-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--hotlight);
+  /* The one authored motion moment: progress eases into place as answers
+     land. Everything else in the room is still. */
+  transition: width 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.command-strip {
+  order: 4;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* The countdown: label above, navy digits below, the exam's own clock. */
+.clock-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 2px;
+}
+
+/* The countdown exists only while an exam is running. Everywhere else the
+   whole block leaves the header - label included - instead of stranding a
+   "Time remaining" caption with no clock under it, and instead of spending
+   header width on nothing. */
+.clock-block:has(#exam-clock[hidden]) {
+  display: none;
+}
+
+.clock-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cs-gray);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#exam-clock {
+  display: block;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  font-size: 1.6rem;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--hotlight);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#exam-clock.danger {
   color: var(--error-text);
+  font-weight: 700;
+}
+
+/* The time warning sits beside the clock. It is an aria-live region, so it
+   is announced when it appears. */
+.exam-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 0;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.exam-warning-action {
+  padding: 3px 10px;
+  font-size: 0.8rem;
 }
 
 /* ---------- Layout ---------- */
@@ -289,41 +406,729 @@ a {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
   grid-template-rows: minmax(0, 1fr);
-  gap: 16px;
+  gap: 24px;
   align-items: start;
+  padding: 24px 32px;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
+/* The question panel is the exam's bordered paper: square corners, a 1px
+   border, and the navigation pinned to its bottom edge. */
 .question-panel {
-  padding: 24px;
-  display: grid;
-  gap: 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 200px);
+  background: var(--window);
+  border: 1px solid var(--paper-border);
+  border-radius: 0;
 }
 
-.navigator-panel {
-  padding: 16px 18px 18px;
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--paper-border);
+}
+
+#question-title {
+  font-size: 1.15rem;
+  line-height: 1.25;
+  min-width: 0;
+  text-wrap: balance;
+}
+
+/* The metadata row reads as plain exam text, not as pills. */
+.toolbar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--cs-gray);
+  font-size: 0.85rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.pill.muted {
+  background: none;
+  color: var(--cs-gray);
+}
+
+#question-position {
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pill.accent {
+  background: none;
+  color: var(--warning);
+}
+
+.pill.danger {
+  background: none;
+  color: var(--error-text);
+}
+
+/* ---------- Filter bar ---------- */
+
+.filter-bar {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--paper-border);
+  background: var(--window);
+}
+
+.field {
   display: grid;
-  /* An `auto` track would size to the header's max-content width and push
-     the panel into horizontal overflow - keep it flexible. */
-  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  min-width: 150px;
+}
+
+.field-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cs-gray);
+  font-weight: 600;
+}
+
+.select {
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 8px 10px;
+  border-radius: 0;
+  border: 1px solid var(--paper-border);
+  background: var(--window);
+  color: var(--ink);
+  min-width: 150px;
+}
+
+.select:hover {
+  border-color: var(--base-gray);
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.select::placeholder,
+.note-input::placeholder {
+  color: var(--cs-gray);
+  opacity: 1;
+}
+
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-bottom: 8px;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+/* The exam's checkbox: a 20px square, 2px border, navy fill with a white
+   check when set. No rounded corners, no native accent. */
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin: 0;
+  border: 2px solid var(--marker-border);
+  border-radius: 0;
+  background: var(--window);
+  position: relative;
+  cursor: pointer;
+  flex: none;
+}
+
+input[type='checkbox']:checked {
+  border-color: var(--hotlight);
+  background: var(--hotlight);
+}
+
+input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: var(--on-hotlight);
+  -webkit-mask: var(--check-mark) center / 13px 13px no-repeat;
+  mask: var(--check-mark) center / 13px 13px no-repeat;
+}
+
+input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The search box takes the room the other filters do not need. */
+.field-search {
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+/* A search hit is marked with the hotlight tint rather than the browser's
+   yellow, which belongs to no palette here. */
+.search-hit {
+  background: rgb(var(--hotlight-rgb) / 0.16);
+  color: inherit;
+  border-radius: 0;
+  padding: 0 2px;
+  font-weight: 600;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  position: sticky;
-  top: 18px;
-  max-height: calc(100vh - 36px);
+  margin-left: auto;
+  padding-bottom: 2px;
+}
+
+.filter-summary {
+  font-size: 0.85rem;
+  color: var(--cs-gray);
+}
+
+/* ---------- Exam blueprint ---------- */
+
+.exam-blueprint {
+  padding: 16px 24px;
+  background: var(--preexam-bg);
+  border-bottom: 1px solid var(--paper-border);
+}
+
+.exam-blueprint h3 {
+  font-size: 1rem;
+}
+
+.blueprint-lead {
+  margin: 8px 0 14px;
+  color: var(--cs-gray);
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+
+.blueprint-grid {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.blueprint-summary {
+  margin: 14px 0 0;
+  font-size: 0.9rem;
+  color: var(--hotlight);
+  font-weight: 600;
+}
+
+/* ---------- The question paper ---------- */
+
+.question-paper {
+  flex: 1 0 auto;
+  padding: 24px;
+}
+
+/* Case study: the exam keeps the study in its own frame above the question.
+   Ours folds open in place; the badge and the border say what it is. */
+.scenario-panel {
+  border-radius: 0;
+  border: 1px solid var(--paper-border);
+  background: var(--window);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.scenario-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--tb-gray);
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink);
+}
+
+.scenario-toggle:hover {
+  background: var(--form-hover);
+}
+
+.scenario-badge {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 0;
+  background: var(--hotlight);
+  color: var(--on-hotlight);
+  white-space: nowrap;
+}
+
+.scenario-name {
+  font-weight: 700;
+  color: var(--hotlight);
+  flex: 1;
+  min-width: 0;
+}
+
+.scenario-chevron {
+  display: inline-flex;
+  color: var(--hotlight);
+  transition: transform 160ms ease-out;
+}
+
+.scenario-chevron .icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.scenario-toggle[aria-expanded='true'] .scenario-chevron {
+  transform: rotate(90deg);
+}
+
+.scenario-body {
+  padding: 4px 18px 18px;
+  border-top: 1px solid var(--paper-border);
+  max-height: 420px;
   overflow: auto;
 }
 
-.toolbar,
+.scenario-section {
+  margin-top: 16px;
+}
+
+.scenario-section h4 {
+  margin: 0 0 6px;
+  font-size: 0.98rem;
+  color: var(--hotlight);
+}
+
+.scenario-section.level-2 {
+  margin-left: 16px;
+}
+
+.scenario-section.level-2 h4 {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.scenario-section p {
+  margin: 0 0 8px;
+  line-height: 1.6;
+  font-size: 0.93rem;
+  color: var(--ink);
+}
+
+.scenario-images {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.scenario-images .rendered-image {
+  width: min(100%, 560px);
+  max-height: 320px;
+}
+
+.question-text {
+  margin: 0;
+  font-size: 1.06rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.question-note {
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border-radius: 0;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  color: var(--warning);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* The shortcut hint sits under the question in the same quiet grey as the
+   rest of the supporting text - a reminder, not a warning. */
+.keyboard-hint {
+  margin: 10px 0 0;
+  color: var(--cs-gray);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* The student's own note on the question: a working area, bordered quietly. */
+.question-notes {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 0;
+  border: 1px solid var(--paper-border);
+  background: var(--form-gray);
+}
+
+.question-notes .field-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.note-input {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  padding: 9px 11px;
+  border-radius: 0;
+  border: 1px solid var(--paper-border);
+  background: var(--window);
+  color: var(--ink);
+}
+
+.note-status {
+  margin: 6px 0 0;
+  min-height: 1em;
+  color: var(--cs-gray);
+  font-size: 0.78rem;
+}
+
+.media-stack {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.rendered-image {
+  width: min(100%, 820px);
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 0;
+  border: 1px solid var(--paper-border);
+  background: var(--window);
+}
+
+/* ---------- Options: the exam's answer rows ----------
+   Radio marker, letter cell ("A."), then the answer text in its own outlined
+   cell. Several answers turn the marker into a box. The row itself stays
+   unpainted - the marker and the outline carry the state. */
+
+.options-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.option-button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 24px 26px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* The marker: a 20px circle for single-answer questions. */
+.option-button::before {
+  content: '';
+  grid-column: 1;
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  border: 2px solid var(--marker-border);
+  border-radius: 50%;
+  background: var(--window);
+  transition: border-color 120ms ease-out, background 120ms ease-out;
+}
+
+/* Several answers: the exam's box marker. */
+.options-list.multi .option-button::before {
+  border-radius: 0;
+}
+
+.option-button.selected::before {
+  border-color: var(--hotlight);
+  background: radial-gradient(circle at center, var(--hotlight) 0 5px, var(--window) 6px);
+}
+
+.options-list.multi .option-button.selected::before {
+  background: var(--hotlight);
+  position: relative;
+}
+
+.options-list.multi .option-button.selected::after {
+  content: '';
+  grid-column: 1;
+  grid-row: 1;
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  background: var(--on-hotlight);
+  -webkit-mask: var(--check-mark) center / 13px 13px no-repeat;
+  mask: var(--check-mark) center / 13px 13px no-repeat;
+  pointer-events: none;
+}
+
+/* The letter cell, right-aligned with its separator, as the exam sets it. */
+.option-label {
+  grid-column: 2;
+  display: block;
+  text-align: right;
+  font-weight: 400;
+  color: var(--ink);
+  padding-top: 3px;
+  user-select: none;
+}
+
+.option-label::after {
+  content: '.';
+}
+
+/* The answer text lives in its own outlined cell. Hover and focus draw the
+   exam's blue outline around it. */
+.option-content {
+  grid-column: 3;
+  display: grid;
+  gap: 10px;
+  outline: 1px solid var(--paper-border);
+  padding: 6px 10px;
+  min-width: 0;
+}
+
+.option-button:not([aria-disabled='true']):hover .option-content,
+.option-button:focus-visible .option-content {
+  outline: 2px solid var(--focus);
+}
+
+.option-button:focus-visible {
+  outline: none;
+}
+
+.option-text {
+  line-height: 1.5;
+  display: block;
+  word-break: break-word;
+}
+
+/* Locked, not dimmed: the options the student now has to study stay legible.
+   The verdict colours the outline and the cell, never the text contrast. */
+.option-button[aria-disabled='true'] {
+  cursor: default;
+  opacity: 1;
+}
+
+.option-button.correct .option-content {
+  outline: 2px solid var(--success-border);
+  background: var(--success-bg);
+}
+
+.option-button.wrong .option-content {
+  outline: 2px solid var(--error-border);
+  background: var(--error-bg);
+}
+
+/* An ordered question shows the step each picked action sits at. */
+.option-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  justify-self: start;
+  padding: 3px 10px;
+  border-radius: 0;
+  background: var(--hotlight);
+  color: var(--on-hotlight);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.options-order-summary {
+  margin: 0 0 2px;
+  padding: 10px 14px;
+  border-radius: 0;
+  border: 1px solid var(--paper-border);
+  background: var(--form-gray);
+  color: var(--hotlight);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+/* A per-statement question: one row per statement, each with its own
+   choices. The statement text is the question, so it gets the emphasis. */
+.statement-row {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--paper-border);
+  border-radius: 0;
+  background: var(--window);
+}
+
+.statement-text {
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.statement-options {
+  display: grid;
+  gap: 8px;
+}
+
+.statement-option {
+  padding: 4px 6px;
+}
+
+.option-media {
+  display: grid;
+  gap: 10px;
+}
+
+.option-media .rendered-image {
+  width: min(100%, 640px);
+  max-height: 360px;
+}
+
+/* ---------- Buttons: the exam's button language ----------
+   Primary: navy fill, a 1px window-coloured border, bold text, square
+   corners; hover inverts to the window colour. Secondary: transparent with
+   navy bold text, hover draws the toolbar grey. */
+
+.solid-button,
+.ghost-button {
+  border-radius: 0;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 120ms ease-out, color 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+.solid-button {
+  background: var(--hotlight);
+  border-color: var(--window);
+  color: var(--on-hotlight);
+  font-weight: 700;
+  min-width: 7em;
+}
+
+.solid-button:hover:not(:disabled) {
+  background: var(--window);
+  color: var(--hotlight);
+  border-color: var(--hotlight);
+}
+
+/* Submit and Confirm wear the same navy as the exam's Finish button; the
+   confirmation dialog carries the gravity, not the colour. */
+.solid-button.danger {
+  background: var(--hotlight);
+  border-color: var(--window);
+  color: var(--on-hotlight);
+}
+
+.solid-button.danger:hover:not(:disabled) {
+  background: var(--window);
+  color: var(--hotlight);
+  border-color: var(--hotlight);
+}
+
+.ghost-button {
+  background: transparent;
+  border-color: transparent;
+  color: var(--hotlight);
+  font-weight: 700;
+}
+
+.ghost-button:hover:not(:disabled) {
+  background: var(--tb-gray);
+  border-color: var(--base-gray);
+}
+
+.ghost-button.small,
+.solid-button.small {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+/* The theme toggle is a setting, not an action: quiet, tabular, nowrap. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.theme-toggle-icon {
+  display: inline-flex;
+}
+
+.theme-toggle-icon .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- The action row: the exam's bottom navigation ----------
+   Previous and Next are both navy, with drawn arrows, and the row stays at
+   the bottom edge of the paper while the question scrolls. */
+
 .actions-row {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  margin-top: auto;
+  padding: 12px 24px;
+  background: var(--window);
+  border-top: 1px solid var(--paper-border);
 }
 
-/* The action row is split into two groups so the phone layout can lift the
-   primary pair into a fixed bottom bar. On wide screens both groups
-   dissolve into the row and the original button order is restored with
-   `order` (Previous, Clear, Flag, Check, Explain, Next). */
+/* The row is split into two groups so the phone layout can lift the primary
+   pair into a fixed bottom bar. On wide screens both groups dissolve into
+   the row and the button order is restored with `order`. */
 .actions-secondary,
 .actions-primary {
   display: contents;
@@ -341,145 +1146,151 @@ a {
   order: 3;
 }
 
-.toolbar {
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* The heading names the subject of the question, so it has to survive a long
-   topic name on one line or two. */
-#question-title {
-  font-size: 1.3rem;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-  min-width: 0;
-  text-wrap: balance;
-}
-
-.toolbar-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-/* ---------- Filter bar ---------- */
-
-.filter-bar {
-  display: flex;
-  gap: 14px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  padding: 16px 0 0;
-  border-radius: 0;
-  border: 0;
-  border-top: 1px solid rgb(var(--border-rgb) / 0.14);
-}
-
-.field {
-  display: grid;
-  gap: 5px;
-  min-width: 150px;
-}
-
-.field-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+/* Previous wears the same navy as Next - the exam draws both the same way. */
+.actions-primary #prev-button {
+  background: var(--hotlight);
+  border-color: var(--window);
+  color: var(--on-hotlight);
   font-weight: 700;
+  min-width: 7em;
 }
 
-.select {
-  font: inherit;
-  padding: 9px 11px;
-  border-radius: 12px;
-  border: 1px solid rgb(var(--border-rgb) / 0.16);
-  background: var(--surface-solid);
-  color: var(--text-main);
-  min-width: 150px;
+.actions-primary #prev-button:hover:not(:disabled) {
+  background: var(--window);
+  color: var(--hotlight);
+  border-color: var(--hotlight);
 }
 
-/* The browser's own placeholder grey is too light on the dark surface. */
-.select::placeholder,
-.note-input::placeholder {
-  color: var(--text-muted);
-  opacity: 1;
+#prev-button::before,
+#next-button::after {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  background: currentColor;
 }
 
-.select:focus-visible,
-.mode-button:focus-visible,
-.solid-button:focus-visible,
-.ghost-button:focus-visible,
-.option-button:focus-visible,
-.nav-chip:focus-visible,
-.navigator-toggle:focus-visible,
-.scenario-toggle:focus-visible,
-.report-row-button:focus-visible,
-.note-input:focus-visible,
-.mobile-navigator:focus-visible,
-.nav-close:focus-visible,
-.exam-warning-action:focus-visible,
-.next-unanswered:focus-visible,
-.app-footer a:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
+#prev-button::before {
+  -webkit-mask: var(--arrow-left) center / contain no-repeat;
+  mask: var(--arrow-left) center / contain no-repeat;
+  margin-right: 8px;
 }
 
-.field-check {
-  display: flex;
+#next-button::after {
+  -webkit-mask: var(--arrow-right) center / contain no-repeat;
+  mask: var(--arrow-right) center / contain no-repeat;
+  margin-left: 8px;
+}
+
+#prev-button,
+#next-button {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding-bottom: 10px;
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  justify-content: center;
 }
 
-/* The search box takes the room the other filters do not need. */
-.field-search {
-  min-width: 220px;
-  flex: 1 1 220px;
-}
+/* ---------- Feedback & explanation ---------- */
 
-/* A search hit is marked with the accent tint rather than the browser's
-   yellow, which would clash with both palettes. */
-.search-hit {
-  background: var(--accent-soft);
-  color: inherit;
-  border-radius: 3px;
-  padding: 0 2px;
+.feedback-banner {
+  border-radius: 0;
+  padding: 14px 16px;
+  margin-top: 16px;
   font-weight: 600;
+  line-height: 1.45;
 }
 
-.field-check input {
-  width: 17px;
-  height: 17px;
-  accent-color: var(--accent);
+.feedback-banner[data-type='success'] {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
 }
 
-.filter-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: auto;
-  padding-bottom: 2px;
+.feedback-banner[data-type='error'] {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
 }
 
-.filter-summary {
+.feedback-banner[data-type='info'] {
+  background: rgb(var(--hotlight-rgb) / 0.08);
+  border: 1px solid rgb(var(--hotlight-rgb) / 0.35);
+  color: var(--ink);
+}
+
+.explanation-panel {
+  border-radius: 0;
+  padding: 20px 24px;
+  border-top: 1px solid var(--paper-border);
+  background: var(--window);
+}
+
+.explanation-panel h3 {
+  font-size: 1rem;
+}
+
+.explanation-panel p {
+  margin: 10px 0 0;
+  line-height: 1.7;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+/* The explanation is written in a small set of markdown: paragraphs, bold,
+   italic, code, bullet lists and links. */
+.explanation-panel strong {
+  color: var(--question-header);
+}
+
+.explanation-panel code {
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-radius: 0;
+  background: var(--form-gray);
+  border: 1px solid var(--paper-border);
+}
+
+.explanation-panel ul,
+.explanation-panel ol {
+  margin: 8px 0 0;
+  padding-left: 22px;
+}
+
+.explanation-panel li {
+  margin: 4px 0;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.explanation-panel li::marker {
+  color: var(--cs-gray);
+}
+
+.explanation-panel a {
+  word-break: break-word;
+}
+
+.reference-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.reference-list a {
   font-size: 0.88rem;
-  color: var(--text-muted);
+  word-break: break-all;
 }
 
-/* ---------- Progress report ---------- */
-/* The report answers "what am I bad at?", so it sits below the question.
-   It is a section of the panel, not a card inside it. */
+/* ---------- Progress report ----------
+   The report answers "what am I bad at?", so it sits below the question.
+   It is a section of the paper, not a card inside it. */
+
 .progress-report {
-  margin-top: 4px;
-  padding: 18px 0 0;
+  margin-top: 0;
+  padding: 20px 24px;
   border-radius: 0;
   border: 0;
-  border-top: 1px solid rgb(var(--accent-rgb) / 0.22);
+  border-top: 1px solid var(--paper-border);
 }
 
 .report-header {
@@ -491,13 +1302,12 @@ a {
 }
 
 .report-header h3 {
-  font-size: 1.05rem;
-  margin-top: 2px;
+  font-size: 1rem;
 }
 
 .report-totals {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--cs-gray);
   font-size: 0.85rem;
 }
 
@@ -505,7 +1315,7 @@ a {
   margin: 10px 0 0;
   font-size: 0.92rem;
   line-height: 1.55;
-  color: var(--text-main);
+  color: var(--ink);
 }
 
 .report-actions {
@@ -519,12 +1329,12 @@ a {
 }
 
 .report-row {
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 .report-row.weakest {
-  background: rgb(var(--warning-rgb) / 0.1);
-  border: 1px solid rgb(var(--warning-rgb) / 0.26);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
 }
 
 .report-row-button {
@@ -537,20 +1347,15 @@ a {
   font: inherit;
   text-align: left;
   border: 1px solid transparent;
-  border-radius: 11px;
+  border-radius: 0;
   background: transparent;
-  color: var(--text-main);
+  color: var(--ink);
   cursor: pointer;
 }
 
 .report-row-button:hover {
-  background: rgb(var(--surface-rgb) / 0.7);
-  border-color: rgb(var(--border-rgb) / 0.16);
-}
-
-.report-row-button:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
+  background: var(--form-gray);
+  border-color: var(--paper-border);
 }
 
 .report-name {
@@ -565,7 +1370,7 @@ a {
   position: relative;
   height: 8px;
   border-radius: 999px;
-  background: rgb(var(--muted-rgb) / 0.16);
+  background: var(--track-gray);
   overflow: hidden;
 }
 
@@ -573,15 +1378,15 @@ a {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--hotlight);
 }
 
 .report-bar-fill.good {
-  background: rgb(var(--success-rgb) / 0.85);
+  background: var(--success);
 }
 
 .report-bar-fill.poor {
-  background: rgb(var(--error-rgb) / 0.85);
+  background: var(--error);
 }
 
 .report-bar-fill.empty {
@@ -598,12 +1403,12 @@ a {
 .report-score.muted {
   font-weight: 500;
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: var(--cs-gray);
 }
 
 .report-weight {
   font-size: 0.78rem;
-  color: var(--text-muted);
+  color: var(--cs-gray);
   text-align: right;
 }
 
@@ -619,29 +1424,472 @@ a {
   border: 0;
 }
 
+/* ---------- Navigator: the exam's Review list ----------
+   The rail wears the toolbar grey; the chips are the review screen's
+   numbered squares, with the same corner marks for flags and notes. */
+
+.navigator-panel {
+  background: var(--tb-gray);
+  border: 1px solid var(--paper-border);
+  border-radius: 0;
+  padding: 16px 18px 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  position: sticky;
+  top: 96px;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+}
+
+.navigator-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.navigator-heading {
+  min-width: 0;
+}
+
+.navigator-heading h3 {
+  font-size: 1rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.navigator-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The sheet close button and the phone-only navigator trigger are hidden
+   until the phone layout needs them. */
+.nav-close,
+.mobile-navigator,
+.nav-backdrop {
+  display: none;
+}
+
+.navigator-caption {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  color: var(--cs-gray);
+  font-size: 0.85rem;
+  overflow-wrap: break-word;
+}
+
+.navigator-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 0;
+  border: 1px solid var(--paper-border);
+  background: var(--window);
+  color: var(--hotlight);
+  font: inherit;
+  cursor: pointer;
+  transition: background 120ms ease-out, border-color 120ms ease-out;
+}
+
+.navigator-toggle:hover {
+  background: var(--form-hover);
+  border-color: var(--base-gray);
+}
+
+.navigator-toggle-icon {
+  display: inline-flex;
+  transition: transform 180ms ease-out;
+}
+
+.navigator-toggle-icon .icon {
+  width: 1.32rem;
+  height: 1.32rem;
+}
+
+/* The wordmark only earns its place on the collapsed rail. */
+.navigator-toggle-label {
+  display: none;
+}
+
+.navigator-content {
+  display: grid;
+  gap: 12px;
+}
+
+/* Collapsed rail (desktop only): the panel folds into a slim vertical tab
+   that keeps the panel reachable without stealing question width. */
+@media (min-width: 1081px) {
+  .nav-collapsed .content-shell {
+    grid-template-columns: minmax(0, 1fr) 62px;
+  }
+
+  .nav-collapsed .navigator-panel {
+    padding: 14px 9px;
+    gap: 14px;
+    justify-items: center;
+    align-content: start;
+  }
+
+  .nav-collapsed .navigator-heading,
+  .nav-collapsed .navigator-caption,
+  .nav-collapsed .navigator-content {
+    display: none;
+  }
+
+  .nav-collapsed .navigator-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .nav-collapsed .navigator-toggle {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 8px;
+    border-radius: 0;
+  }
+
+  .nav-collapsed .navigator-toggle-label {
+    display: block;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--hotlight);
+  }
+
+  .nav-collapsed .navigator-toggle-icon {
+    order: -1;
+    transform: rotate(180deg);
+  }
+}
+
+/* ---------- Icons ---------- */
+
+/* One drawn set, one stroke weight. */
+.icon {
+  width: 1.1em;
+  height: 1.1em;
+  display: block;
+  flex: none;
+}
+
+/* ---------- Navigator legend ---------- */
+
+.navigator-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--cs-gray);
+  font-size: 0.78rem;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+  border: 1px solid var(--base-gray);
+  background: var(--window);
+}
+
+.legend-swatch.answered {
+  background: rgb(var(--hotlight-rgb) / 0.16);
+  border-color: var(--hotlight);
+}
+
+.legend-swatch.correct {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.legend-swatch.wrong {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+}
+
+/* Flagged and noted are corner marks on the chip, so they are corner marks
+   in the key too. */
+.legend-swatch.flagged,
+.legend-swatch.noted {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.legend-swatch.flagged {
+  background: var(--warning);
+  border-color: var(--warning);
+}
+
+.legend-swatch.noted {
+  background: var(--cs-gray);
+  border-color: var(--cs-gray);
+}
+
+/* ---------- Question grid ---------- */
+
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
+  gap: 6px;
+}
+
+.nav-chip {
+  width: 100%;
+  border: 1px solid var(--base-gray);
+  border-radius: 2px;
+  background: var(--window);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  padding: 9px 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.nav-chip:hover {
+  border-color: var(--hotlight);
+}
+
+.nav-chip.current {
+  border-color: var(--hotlight);
+  box-shadow: inset 0 0 0 1px var(--hotlight);
+  font-weight: 700;
+}
+
+.nav-chip.answered {
+  background: rgb(var(--hotlight-rgb) / 0.16);
+  border-color: var(--hotlight);
+}
+
+.nav-chip.correct {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.nav-chip.wrong {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+}
+
+.nav-chip.flagged::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+.nav-chip.ungraded {
+  background: var(--form-gray);
+  border-style: dashed;
+}
+
+/* A question the student has written a note on carries a corner mark, so a
+   note can be found again from the navigator. */
+.nav-chip.noted::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hotlight);
+}
+
+/* ---------- Exam results ---------- */
+
+.exam-results {
+  margin: 0 0 16px;
+  padding: 0 0 16px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--paper-border);
+  /* The result tables have a hard min-content width; let them scroll inside
+     the panel instead of stretching the whole navigator. */
+  overflow-x: auto;
+}
+
+.exam-results h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+/* The verdict is the first thing in the review, not a footnote. */
+.score-verdict {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.score-verdict[data-verdict='pass'] {
+  color: var(--success-text);
+}
+
+.score-verdict[data-verdict='fail'] {
+  color: var(--error-text);
+}
+
+.score-line {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--hotlight);
+  margin: 0 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-sub {
+  margin: 0 0 14px;
+  color: var(--cs-gray);
+  font-size: 0.9rem;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.result-table th,
+.result-table td {
+  text-align: left;
+  padding: 6px 5px;
+  border-bottom: 1px solid var(--paper-border);
+}
+
+.result-table th {
+  color: var(--cs-gray);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.result-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Footer ---------- */
+
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding: 12px 32px;
+  font-size: 0.84rem;
+  color: var(--cs-gray);
+  background: var(--window);
+  border-top: 1px solid var(--paper-border);
+}
+
+/* The offline state is worth saying out loud when the connection is gone. */
+.footer-offline {
+  margin-left: 10px;
+  color: var(--hotlight);
+  font-weight: 600;
+}
+
+.footer-offline.warn {
+  color: var(--warning);
+}
+
+.footer-links {
+  display: flex;
+  gap: 14px;
+}
+
+/* ---------- Loading ---------- */
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(var(--window-rgb) / 0.96);
+  z-index: 50;
+}
+
+.loading-card {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 30px 38px;
+  border-radius: 0;
+  border: 1px solid var(--paper-border);
+  background: var(--window);
+  box-shadow: var(--shadow);
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgb(var(--hotlight-rgb) / 0.25);
+  border-top-color: var(--hotlight);
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---------- Export dialog and printable record ---------- */
 
-/* The on-screen record. The printable one lives in #print-report, which is
-   hidden until the page prints. */
+/* The exam's modal: a square white box, a real offset shadow, no frosting.
+   The record the student reads must not have the page showing through it. */
 .export-dialog {
   width: min(760px, 94vw);
   max-height: 88vh;
   padding: 0;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius);
-  /* Solid, not frosted: the record the student reads must not have the page
-     showing through it. */
-  background: var(--surface-solid);
-  color: var(--text-main);
+  border: 1px solid var(--paper-border);
+  border-radius: 0;
+  background: var(--window);
+  color: var(--ink);
   box-shadow: var(--shadow);
 }
 
 .export-dialog::backdrop {
-  background: rgb(var(--overlay-rgb) / 0.62);
+  background: var(--overlay);
 }
 
 .export-inner {
-  padding: 20px 22px;
+  padding: 24px;
   overflow: auto;
   max-height: 88vh;
   display: grid;
@@ -656,13 +1904,13 @@ a {
 }
 
 .export-header h2 {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
 }
 
 .export-summary {
   margin: 0;
   font-size: 0.92rem;
-  color: var(--text-muted);
+  color: var(--cs-gray);
 }
 
 .export-breakdown {
@@ -678,15 +1926,15 @@ a {
 .export-table th,
 .export-table td {
   padding: 7px 10px;
-  border-bottom: 1px solid rgb(var(--border-rgb) / 0.14);
+  border-bottom: 1px solid var(--paper-border);
   text-align: left;
 }
 
 .export-table th {
-  font-size: 0.72rem;
-  letter-spacing: 0.07em;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--cs-gray);
 }
 
 .export-table td.num {
@@ -697,7 +1945,7 @@ a {
 .export-note {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--cs-gray);
 }
 
 .export-actions {
@@ -793,992 +2041,6 @@ a {
   }
 }
 
-/* ---------- Exam blueprint ---------- */
-
-.exam-blueprint {
-  border-radius: 0;
-  padding: 18px 0 0;
-  background: transparent;
-  border: 0;
-  border-top: 1px solid rgb(var(--accent-rgb) / 0.2);
-}
-
-.exam-blueprint h3 {
-  font-size: 1.02rem;
-}
-
-.blueprint-lead {
-  margin: 8px 0 14px;
-  color: var(--text-muted);
-  line-height: 1.55;
-  font-size: 0.92rem;
-}
-
-.blueprint-grid {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.blueprint-summary {
-  margin: 14px 0 0;
-  font-size: 0.9rem;
-  color: var(--accent-strong);
-  font-weight: 600;
-}
-
-/* ---------- Scenario panel ---------- */
-
-.scenario-panel {
-  border-radius: 18px;
-  border: 1px solid rgb(var(--accent-rgb) / 0.22);
-  background: rgb(var(--accent-rgb) / 0.06);
-  overflow: hidden;
-}
-
-.scenario-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: transparent;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-  color: var(--text-main);
-}
-
-.scenario-badge {
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 700;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--on-accent);
-  white-space: nowrap;
-}
-
-.scenario-name {
-  font-weight: 700;
-  color: var(--accent-strong);
-  flex: 1;
-  min-width: 0;
-}
-
-.scenario-chevron {
-  display: inline-flex;
-  color: var(--accent-strong);
-  transition: transform 160ms ease;
-}
-
-.scenario-chevron .icon {
-  width: 1.15rem;
-  height: 1.15rem;
-}
-
-.scenario-toggle[aria-expanded="true"] .scenario-chevron {
-  transform: rotate(90deg);
-}
-
-.scenario-body {
-  padding: 4px 18px 18px;
-  border-top: 1px solid rgb(var(--accent-rgb) / 0.18);
-  max-height: 420px;
-  overflow: auto;
-}
-
-.scenario-section {
-  margin-top: 16px;
-}
-
-.scenario-section h4 {
-  margin: 0 0 6px;
-  font-size: 0.98rem;
-  color: var(--accent-strong);
-}
-
-.scenario-section.level-2 {
-  margin-left: 16px;
-}
-
-.scenario-section.level-2 h4 {
-  font-size: 0.9rem;
-  color: var(--text-main);
-}
-
-.scenario-section p {
-  margin: 0 0 8px;
-  line-height: 1.6;
-  font-size: 0.93rem;
-  color: var(--text-main);
-}
-
-.scenario-images {
-  display: grid;
-  gap: 10px;
-  margin: 10px 0;
-}
-
-.scenario-images .rendered-image {
-  width: min(100%, 560px);
-  max-height: 320px;
-}
-
-/* ---------- Question body ---------- */
-
-.question-text {
-  margin: 0;
-  font-size: 1.12rem;
-  line-height: 1.7;
-  white-space: pre-wrap;
-}
-
-.question-note {
-  margin: 14px 0 0;
-  padding: 11px 14px;
-  border-radius: 14px;
-  background: rgb(var(--warning-rgb) / 0.1);
-  border: 1px solid rgb(var(--warning-rgb) / 0.24);
-  color: var(--warning);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-/* The shortcut hint sits under the question, in the same muted grey as the
-   rest of the supporting text - it is a reminder, not a warning. */
-.keyboard-hint {
-  margin: 10px 0 0;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
-
-/* The student's own note on the question. It is a working area, not a
-   warning, so it is bordered quietly and stays out of the way. */
-.question-notes {
-  margin: 14px 0 0;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid rgb(var(--border-rgb) / 0.16);
-  background: rgb(var(--surface-rgb) / 0.55);
-}
-
-.question-notes .field-label {
-  display: block;
-  margin-bottom: 6px;
-}
-
-.note-input {
-  width: 100%;
-  resize: vertical;
-  font: inherit;
-  font-size: 0.92rem;
-  line-height: 1.5;
-  padding: 9px 11px;
-  border-radius: 12px;
-  border: 1px solid rgb(var(--border-rgb) / 0.16);
-  background: var(--surface-solid);
-  color: var(--text-main);
-}
-
-.note-input:focus-visible {
-  outline: 3px solid rgb(var(--accent-rgb) / 0.4);
-  outline-offset: 2px;
-}
-
-.note-status {
-  margin: 6px 0 0;
-  min-height: 1em;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-}
-
-/* The time warning sits next to the clock. It is an aria-live region, so it
-   is announced when it appears. */
-.exam-warning {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgb(var(--error-rgb) / 0.14);
-  border: 1px solid rgb(var(--error-rgb) / 0.32);
-  color: var(--error-text);
-  font-size: 0.86rem;
-  font-weight: 600;
-}
-
-.exam-warning-action {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-}
-
-.media-stack {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.rendered-image {
-  width: min(100%, 820px);
-  max-height: 520px;
-  object-fit: contain;
-  border-radius: 16px;
-  border: 1px solid rgb(var(--border-rgb) / 0.12);
-  background: rgb(var(--surface-rgb) / 0.94);
-  box-shadow: 0 14px 40px rgb(var(--shadow-rgb) / 0.12);
-}
-
-.options-list {
-  display: grid;
-  gap: 12px;
-  margin-top: 18px;
-}
-
-/* An option is a control, not a card: it keeps its outline so the state is
-   readable, but it does not paint its own surface inside the panel. */
-.option-button {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 14px;
-  align-items: start;
-  text-align: left;
-  padding: 15px 16px;
-  border-radius: 18px;
-  border: 1px solid var(--option-border);
-  background: transparent;
-  cursor: pointer;
-  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
-}
-
-.option-button:not([aria-disabled='true']):hover {
-  transform: translateY(-1px);
-  border-color: rgb(var(--accent-rgb) / 0.4);
-  background: rgb(var(--surface-rgb) / 0.5);
-}
-
-/* Locked, not dimmed. The options the student now has to study are the ones
-   that must stay legible. */
-.option-button[aria-disabled='true'] {
-  cursor: default;
-}
-
-.option-button.selected {
-  border-color: rgb(var(--accent-rgb) / 0.55);
-  background: rgb(var(--accent-rgb) / 0.08);
-}
-
-.option-button.correct {
-  background: var(--success-bg);
-  border-color: var(--success-border);
-}
-
-.option-button.wrong {
-  background: var(--error-bg);
-  border-color: var(--error-border);
-}
-
-.option-label {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgb(var(--accent-rgb) / 0.13);
-  color: var(--accent-strong);
-  font-weight: 700;
-}
-
-.option-text {
-  line-height: 1.5;
-  display: block;
-  word-break: break-word;
-}
-
-/* An ordered question shows the step each picked action sits at, so the
-   sequence the student is being asked for is visible while they pick it. */
-.option-step {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  align-self: flex-start;
-  margin-bottom: 8px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--accent-strong);
-  color: var(--on-accent);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.options-order-summary {
-  margin: 0 0 2px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-
-/* A per-statement question: one row per statement, each with its own
-   choices. The statement text is the question, so it gets the emphasis
-   and the choices sit underneath it. */
-.statement-row {
-  display: grid;
-  gap: 12px;
-  padding: 16px 18px;
-  border: 1px solid var(--option-border);
-  border-radius: 18px;
-  background: var(--option-bg);
-}
-
-.statement-text {
-  margin: 0;
-  line-height: 1.5;
-  font-weight: 600;
-}
-
-.statement-options {
-  display: grid;
-  gap: 8px;
-}
-
-.statement-option {
-  grid-template-columns: 38px 1fr;
-  gap: 12px;
-  padding: 11px 14px;
-  border-radius: 14px;
-}
-
-.option-content {
-  display: grid;
-  gap: 10px;
-}
-
-.option-media {
-  display: grid;
-  gap: 10px;
-}
-
-.option-media .rendered-image {
-  width: min(100%, 640px);
-  max-height: 360px;
-}
-
-/* ---------- Buttons ---------- */
-
-.solid-button,
-.ghost-button {
-  border-radius: 999px;
-  padding: 11px 18px;
-  font: inherit;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: background 140ms ease, color 140ms ease;
-}
-
-.solid-button {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-
-.solid-button:hover:not(:disabled) {
-  background: var(--accent-strong);
-}
-
-.solid-button.danger {
-  background: var(--danger-solid);
-  color: var(--on-danger);
-}
-
-.solid-button.danger:hover:not(:disabled) {
-  background: var(--danger-strong);
-}
-
-.ghost-button {
-  background: rgb(var(--surface-rgb) / 0.68);
-  border-color: rgb(var(--border-rgb) / 0.14);
-  color: var(--text-main);
-}
-
-.ghost-button:hover:not(:disabled) {
-  background: rgb(var(--surface-rgb) / 0.95);
-}
-
-.ghost-button.small {
-  padding: 8px 13px;
-  font-size: 0.86rem;
-}
-
-/* The theme toggle is the one control that is always on screen, so it is
-   kept quiet - it reads as a setting, not as a primary action. */
-.theme-toggle {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* The options are locked after grading, but the student has to read them.
-   They keep their contrast; the lock is carried by the state colour and the
-   cursor, not by dimming the text. */
-.option-button[aria-disabled='true'] {
-  opacity: 1;
-  cursor: default;
-}
-
-.option-button[aria-disabled='true']:hover {
-  transform: none;
-  background: transparent;
-}
-
-/* ---------- Feedback & explanation ---------- */
-
-.feedback-banner,
-.explanation-panel {
-  border-radius: 18px;
-  padding: 16px 18px;
-}
-
-.feedback-banner[data-type="success"] {
-  background: var(--success-bg);
-  border: 1px solid var(--success-border);
-}
-
-.feedback-banner[data-type="error"] {
-  background: var(--error-bg);
-  border: 1px solid var(--error-border);
-}
-
-.feedback-banner[data-type="info"] {
-  background: rgb(var(--accent-rgb) / 0.08);
-  border: 1px solid rgb(var(--accent-rgb) / 0.2);
-}
-
-.explanation-panel {
-  background: rgb(var(--surface-rgb) / 0.74);
-  border: 1px solid rgb(var(--border-rgb) / 0.1);
-}
-
-.explanation-panel p {
-  margin: 10px 0 0;
-  line-height: 1.7;
-  color: var(--text-muted);
-  white-space: pre-wrap;
-}
-
-/* The explanation is written in a small set of markdown: paragraphs,
-   bold, italic, code, bullet lists and links. */
-.explanation-panel strong {
-  color: var(--text);
-}
-
-.explanation-panel code {
-  font-size: 0.92em;
-  padding: 1px 5px;
-  border-radius: 6px;
-  background: rgb(var(--surface-rgb) / 0.9);
-  border: 1px solid rgb(var(--border-rgb) / 0.12);
-}
-
-.explanation-panel ul,
-.explanation-panel ol {
-  margin: 8px 0 0;
-  padding-left: 22px;
-}
-
-.explanation-panel li {
-  margin: 4px 0;
-  line-height: 1.7;
-  color: var(--text-muted);
-}
-
-.explanation-panel li::marker {
-  color: var(--text-muted);
-}
-
-.explanation-panel a {
-  word-break: break-word;
-}
-
-.reference-list {
-  margin-top: 12px;
-  display: grid;
-  gap: 6px;
-}
-
-.reference-list a {
-  font-size: 0.88rem;
-  word-break: break-all;
-}
-
-/* ---------- Navigator ---------- */
-
-.navigator-header {
-  display: grid;
-  /* The heading keeps its own line and the tools sit under it, so a long
-     heading never has to share a row with the buttons. */
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px 16px;
-  align-items: center;
-}
-
-.navigator-heading {
-  min-width: 0;
-}
-
-.navigator-heading h3 {
-  font-size: 1.02rem;
-  line-height: 1.3;
-  text-wrap: balance;
-}
-
-.navigator-tools {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* The sheet close button and the phone-only navigator trigger are hidden
-   until the phone layout needs them. */
-.nav-close,
-.mobile-navigator,
-.nav-backdrop {
-  display: none;
-}
-
-.navigator-caption {
-  grid-column: 1 / -1;
-  min-width: 0;
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  overflow-wrap: break-word;
-}
-
-/* ---------- Icons ---------- */
-
-/* One drawn set, one stroke weight. The chevron, the menu and the close
-   used to be text characters picked from the font, which is how a symbol
-   ends up with a different weight from its neighbours. */
-.icon {
-  width: 1.1em;
-  height: 1.1em;
-  display: block;
-  flex: none;
-}
-
-/* ---------- Navigator legend ---------- */
-
-/* The chips carry their state in colour, so the colour needs a key. */
-.navigator-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend-swatch {
-  width: 13px;
-  height: 13px;
-  border-radius: 4px;
-  border: 1px solid rgb(var(--border-rgb) / 0.22);
-}
-
-.legend-swatch.answered {
-  background: rgb(var(--accent-rgb) / 0.13);
-  border-color: rgb(var(--accent-rgb) / 0.36);
-}
-
-.legend-swatch.correct {
-  background: rgb(var(--success-rgb) / 0.16);
-  border-color: rgb(var(--success-rgb) / 0.45);
-}
-
-.legend-swatch.wrong {
-  background: rgb(var(--error-rgb) / 0.16);
-  border-color: rgb(var(--error-rgb) / 0.45);
-}
-
-/* Flagged and noted are corner marks on the chip, so they are corner marks
-   in the key too. */
-.legend-swatch.flagged,
-.legend-swatch.noted {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-}
-
-.legend-swatch.flagged {
-  background: var(--warning);
-  border-color: var(--warning);
-}
-
-.legend-swatch.noted {
-  background: var(--muted-rgb);
-  border-color: var(--muted-rgb);
-}
-
-/* ---------- Exam mode ---------- */
-
-/* In a timed exam the clock is the one thing that must never scroll away,
-   so the header holds its place while the paper is running. */
-body.exam-running .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-}
-
-body.exam-running .topbar-copy {
-  display: none;
-}
-
-.navigator-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 38px;
-  height: 38px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgb(var(--border-rgb) / 0.16);
-  background: rgb(var(--surface-rgb) / 0.72);
-  color: var(--accent-strong);
-  font: inherit;
-  cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
-}
-
-.navigator-toggle:hover {
-  background: rgb(var(--surface-rgb) / 0.96);
-  border-color: rgb(var(--accent-rgb) / 0.4);
-}
-
-.navigator-toggle-icon {
-  display: inline-flex;
-  transition: transform 180ms ease;
-}
-
-.navigator-toggle-icon .icon {
-  width: 1.32rem;
-  height: 1.32rem;
-}
-
-/* The wordmark only earns its place on the collapsed rail. */
-.navigator-toggle-label {
-  display: none;
-}
-
-.navigator-content {
-  display: grid;
-  gap: 12px;
-}
-
-/* Collapsed rail (desktop only): the panel folds into a slim vertical tab
-   that keeps the panel reachable without stealing question width. */
-@media (min-width: 1081px) {
-  .nav-collapsed .content-shell {
-    grid-template-columns: minmax(0, 1fr) 62px;
-  }
-
-  .nav-collapsed .navigator-panel {
-    padding: 14px 9px;
-    gap: 14px;
-    justify-items: center;
-    align-content: start;
-  }
-
-  .nav-collapsed .navigator-heading,
-  .nav-collapsed .navigator-caption,
-  .nav-collapsed .navigator-content {
-    display: none;
-  }
-
-  .nav-collapsed .navigator-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .nav-collapsed .navigator-toggle {
-    width: 100%;
-    height: auto;
-    flex-direction: column;
-    gap: 14px;
-    padding: 16px 8px;
-    border-radius: 18px;
-  }
-
-  .nav-collapsed .navigator-toggle-label {
-    display: block;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--accent-strong);
-  }
-
-  .nav-collapsed .navigator-toggle-icon {
-    order: -1;
-    transform: rotate(180deg);
-  }
-}
-
-.question-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
-  gap: 7px;
-}
-
-.nav-chip {
-  width: 100%;
-  border: 1px solid rgb(var(--border-rgb) / 0.14);
-  border-radius: 11px;
-  background: rgb(var(--surface-rgb) / 0.74);
-  color: var(--text-main);
-  font: inherit;
-  font-size: 0.85rem;
-  padding: 9px 0;
-  cursor: pointer;
-  position: relative;
-}
-
-.nav-chip.current {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
-  font-weight: 700;
-}
-
-.nav-chip.answered {
-  background: rgb(var(--accent-rgb) / 0.13);
-  border-color: rgb(var(--accent-rgb) / 0.36);
-}
-
-.nav-chip.correct {
-  background: rgb(var(--success-rgb) / 0.16);
-  border-color: rgb(var(--success-rgb) / 0.45);
-}
-
-.nav-chip.wrong {
-  background: rgb(var(--error-rgb) / 0.16);
-  border-color: rgb(var(--error-rgb) / 0.45);
-}
-
-.nav-chip.flagged::after {
-  content: "";
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--warning);
-}
-
-.nav-chip.ungraded {
-  background: rgb(var(--muted-rgb) / 0.12);
-  border-style: dashed;
-}
-
-/* A question the student has written a note on carries a corner mark, so a
-   note can be found again from the navigator. */
-.nav-chip.noted::before {
-  content: "";
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-
-/* ---------- Exam results ---------- */
-
-.exam-results {
-  margin-top: 0;
-  margin-bottom: 16px;
-  padding: 0 0 16px;
-  border-radius: 0;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.2);
-  /* The result tables have a hard min-content width; let them scroll inside
-     the card instead of stretching the whole navigator panel. */
-  overflow-x: auto;
-}
-
-.exam-results h3 {
-  font-size: 1.05rem;
-  margin-bottom: 8px;
-}
-
-/* The verdict is the first thing in the review, not a footnote. */
-.score-verdict {
-  margin: 0 0 4px;
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.score-verdict[data-verdict='pass'] {
-  color: var(--success);
-}
-
-.score-verdict[data-verdict='fail'] {
-  color: var(--error-text);
-}
-
-.score-line {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--accent-strong);
-  margin: 0 0 4px;
-}
-
-.score-sub {
-  margin: 0 0 14px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.result-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-}
-
-.result-table th,
-.result-table td {
-  text-align: left;
-  padding: 6px 5px;
-  border-bottom: 1px solid rgb(var(--border-rgb) / 0.1);
-}
-
-.result-table th {
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.result-table td.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- Footer ---------- */
-
-.app-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 12px 16px;
-  font-size: 0.84rem;
-  color: var(--text-muted);
-  /* The footer is its own surface, so the links have a known background to
-     be measured against instead of the page gradient. */
-  background: var(--surface-solid);
-  border-radius: 16px;
-}
-
-/* The offline state is worth saying out loud when the connection is gone. */
-.footer-offline {
-  margin-left: 10px;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.footer-offline.warn {
-  color: var(--warning);
-}
-
-.footer-links {
-  display: flex;
-  gap: 14px;
-}
-
-/* ---------- Loading overlay ---------- */
-
-.loading-overlay {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgb(var(--code-bg-rgb) / 0.86);
-  backdrop-filter: blur(6px);
-  z-index: 50;
-}
-
-.loading-card {
-  display: grid;
-  justify-items: center;
-  gap: 14px;
-  padding: 30px 38px;
-  border-radius: 20px;
-  background: var(--surface-solid);
-  box-shadow: var(--shadow);
-}
-
-.spinner {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 3px solid rgb(var(--accent-rgb) / 0.2);
-  border-top-color: var(--accent);
-  animation: spin 900ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation-duration: 3s;
-  }
-  .option-button:not([aria-disabled='true']):hover,
-  .mode-button,
-  .solid-button,
-  .ghost-button,
-  .navigator-toggle,
-  .navigator-toggle-icon {
-    transition: none;
-  }
-}
-
 /* ---------- Responsive ---------- */
 
 /* Tablet and small desktop: one column, the navigator sits under the
@@ -1793,7 +2055,7 @@ body.exam-running .topbar-copy {
     max-height: none;
   }
 
-  /* Single column: the panel keeps its heading and only the grid folds away. */
+  /* Single column: the panel keeps its heading and only the grid folds. */
   .nav-collapsed .navigator-content {
     display: none;
   }
@@ -1805,16 +2067,11 @@ body.exam-running .topbar-copy {
 
 @media (min-width: 821px) and (max-width: 960px) {
   .topbar {
-    grid-template-columns: 1fr;
-    justify-items: start;
+    gap: 10px 18px;
   }
 
-  .summary-strip,
-  .mode-switch,
-  .command-strip,
-  .filter-actions {
+  .summary-strip {
     justify-content: flex-start;
-    margin-left: 0;
   }
 
   .toolbar {
@@ -1829,22 +2086,33 @@ body.exam-running .topbar-copy {
   }
 }
 
-/* Landscape phones are wide but short: keep the header on one row and
-   out of the way while the content keeps the stacked layout. */
+/* Laptop widths: the review command ("New Random Exam") is the widest the
+   header ever gets. The short label keeps the instrument cluster on one row
+   down to 1280, the way the exam's own header never breaks. */
+@media (min-width: 821px) and (max-width: 1360px) {
+  #new-exam .btn-label-long {
+    display: none;
+  }
+
+  #new-exam .btn-label-short {
+    display: inline;
+  }
+}
+
+/* Landscape phones are wide but short: keep the header on one row and out
+   of the way while the content keeps the stacked layout. */
 @media (min-width: 821px) and (max-height: 560px) {
   .topbar {
-    grid-template-columns: auto auto minmax(0, 1fr) auto;
-    align-items: center;
-    padding: 10px 14px;
-    gap: 12px;
+    flex-wrap: nowrap;
+    padding: 8px 16px;
+    gap: 14px;
   }
 
   .topbar h1 {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
   }
 
-  .topbar-subtitle,
-  .topbar-copy {
+  .topbar-subtitle {
     display: none;
   }
 
@@ -1857,7 +2125,7 @@ body.exam-running .topbar-copy {
   }
 
   .mode-button {
-    padding: 7px 12px;
+    padding: 6px 10px;
     font-size: 0.82rem;
   }
 
@@ -1865,16 +2133,15 @@ body.exam-running .topbar-copy {
     flex-wrap: nowrap;
     overflow-x: auto;
     justify-content: flex-start;
-    gap: 6px;
+    gap: 14px;
   }
 
   .summary-card {
     min-width: 0;
-    padding: 5px 9px;
   }
 
   .summary-label {
-    font-size: 0.56rem;
+    font-size: 0.7rem;
   }
 
   .summary-value {
@@ -1883,42 +2150,38 @@ body.exam-running .topbar-copy {
 
   .command-strip .solid-button,
   .command-strip .ghost-button {
-    padding: 8px 12px;
+    padding: 6px 10px;
     font-size: 0.82rem;
   }
 
   #exam-clock {
-    padding: 6px 10px;
-    font-size: 0.85rem;
+    font-size: 1.1rem;
   }
 }
 
 /* ---------- Phone layout ----------
-   The exam simulator becomes a thumb-first single column: a slim sticky
-   header that always carries the clock, a fixed action bar at the bottom
-   and the navigator as a bottom sheet. */
+   The exam room becomes a thumb-first single column: a slim sticky header
+   that always carries the clock, a fixed action bar at the bottom, and the
+   navigator as a bottom sheet. */
 
 @media (max-width: 820px) {
   .app-shell {
-    padding: 10px 10px 104px;
-    gap: 12px;
+    padding-bottom: 88px;
   }
 
   .content-shell {
     grid-template-columns: minmax(0, 1fr);
+    padding: 12px 12px 16px;
+    gap: 12px;
   }
 
   /* --- sticky header --- */
   .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 30;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px 10px;
-    padding: 10px 12px;
-    border-radius: 18px;
+    gap: 8px 8px;
+    padding: 10px 10px;
   }
 
   .brand-block {
@@ -1926,19 +2189,17 @@ body.exam-running .topbar-copy {
     flex: 0 0 auto;
   }
 
-  .topbar-subtitle,
-  .topbar-copy {
+  .topbar-subtitle {
     display: none;
   }
 
   .topbar h1 {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
 
   .mode-switch {
     order: 3;
     flex: 0 0 auto;
-    gap: 6px;
   }
 
   .mode-label-long {
@@ -1955,23 +2216,19 @@ body.exam-running .topbar-copy {
   }
 
   .mode-button {
-    padding: 8px 13px;
-    font-size: 0.86rem;
+    padding: 7px 12px;
+    font-size: 0.85rem;
   }
 
   .summary-strip {
     order: 4;
-    flex: 1 1 140px;
+    flex: 1 1 100%;
     min-width: 0;
     flex-wrap: nowrap;
     overflow-x: auto;
     justify-content: flex-start;
-    gap: 6px;
+    gap: 16px;
     scrollbar-width: none;
-    /* The strip scrolls. The fade says so, instead of letting a label look
-       chopped off. */
-    mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent 100%);
   }
 
   .summary-strip::-webkit-scrollbar {
@@ -1980,15 +2237,12 @@ body.exam-running .topbar-copy {
 
   .summary-card {
     flex: 0 0 auto;
-    /* The card keeps its full width, so the label is never cut in half. The
-       strip scrolls instead. */
     min-width: max-content;
-    padding: 2px 12px 2px 0;
+    padding: 2px 0;
   }
 
   .summary-label {
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
+    font-size: 0.7rem;
   }
 
   .summary-value {
@@ -1999,19 +2253,27 @@ body.exam-running .topbar-copy {
     order: 2;
     flex: 0 0 auto;
     margin-left: auto;
-    gap: 6px;
+    gap: 3px;
   }
 
   .command-strip .solid-button,
   .command-strip .ghost-button {
-    padding: 8px 12px;
-    font-size: 0.85rem;
+    padding: 7px 7px;
+    font-size: 0.82rem;
+    min-width: 0;
+  }
+
+  .clock-block {
+    padding: 0 2px;
+  }
+
+  .clock-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
   }
 
   #exam-clock {
-    padding: 7px 11px;
-    font-size: 0.9rem;
-    font-variant-numeric: tabular-nums;
+    font-size: 1.05rem;
   }
 
   .mobile-navigator {
@@ -2020,12 +2282,12 @@ body.exam-running .topbar-copy {
     justify-content: center;
     gap: 6px;
     min-width: 40px;
-    height: 38px;
+    height: 36px;
     padding: 0 10px;
-    border-radius: 999px;
-    border: 1px solid rgb(var(--border-rgb) / 0.16);
-    background: rgb(var(--surface-rgb) / 0.72);
-    color: var(--accent-strong);
+    border-radius: 0;
+    border: 1px solid var(--paper-border);
+    background: var(--window);
+    color: var(--hotlight);
     font: inherit;
     font-size: 0.85rem;
     font-weight: 700;
@@ -2046,41 +2308,40 @@ body.exam-running .topbar-copy {
     display: none;
   }
 
-  /* --- question panel --- */
+  /* --- question paper --- */
   .question-panel {
-    padding: 16px;
-    gap: 14px;
-    /* A blurred ancestor would become the containing block for the fixed
-       action bar, so the phone build swaps the blur for a solid panel. */
-    backdrop-filter: none;
-    background: rgb(var(--surface-rgb) / 0.95);
+    min-height: 0;
   }
 
   .toolbar {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
+    padding: 12px 16px;
   }
 
   .toolbar-actions {
     justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .question-paper {
+    padding: 16px;
   }
 
   .question-text {
-    font-size: 1.04rem;
+    font-size: 1rem;
     line-height: 1.6;
   }
 
   .option-button {
-    grid-template-columns: 34px 1fr;
-    gap: 10px;
-    padding: 12px 13px;
+    grid-template-columns: 22px 22px minmax(0, 1fr);
+    gap: 8px;
+    padding: 5px 4px;
   }
 
-  .option-label {
-    width: 28px;
-    height: 28px;
-    font-size: 0.9rem;
+  .option-content {
+    padding: 5px 8px;
   }
 
   .scenario-body {
@@ -2089,7 +2350,7 @@ body.exam-running .topbar-copy {
 
   /* --- filters and blueprint: label left, control right --- */
   .filter-bar {
-    padding: 14px 0 0;
+    padding: 14px 16px;
     gap: 10px;
   }
 
@@ -2110,7 +2371,7 @@ body.exam-running .topbar-copy {
   }
 
   .exam-blueprint {
-    padding: 14px 0 0;
+    padding: 14px 16px;
   }
 
   .blueprint-grid {
@@ -2140,24 +2401,16 @@ body.exam-running .topbar-copy {
     z-index: 60;
     max-height: 78vh;
     margin: 0;
-    padding: 10px 16px calc(20px + env(safe-area-inset-bottom));
-    border-radius: 24px 24px 0 0;
+    padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
     border-bottom: 0;
-    box-shadow: 0 -24px 60px rgb(var(--shadow-rgb) / 0.3);
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 0.25);
     transform: translateY(102%);
     visibility: hidden;
     transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), visibility 260ms;
     overscroll-behavior: contain;
-  }
-
-  .navigator-panel::before {
-    content: "";
-    display: block;
-    width: 42px;
-    height: 4px;
-    border-radius: 999px;
-    background: rgb(var(--border-rgb) / 0.2);
-    margin: 0 auto 10px;
   }
 
   body.nav-open .navigator-panel {
@@ -2173,8 +2426,8 @@ body.exam-running .topbar-copy {
     gap: 6px;
   }
 
-  /* The sheet has its own close button - the collapse chevron is a
-     desktop concept. */
+  /* The sheet has its own close button - the collapse chevron is a desktop
+     concept. */
   .navigator-toggle {
     display: none;
   }
@@ -2185,10 +2438,10 @@ body.exam-running .topbar-copy {
     justify-content: center;
     width: 36px;
     height: 36px;
-    border-radius: 999px;
-    border: 1px solid rgb(var(--border-rgb) / 0.16);
-    background: rgb(var(--surface-rgb) / 0.8);
-    color: var(--text-main);
+    border-radius: 0;
+    border: 1px solid var(--paper-border);
+    background: var(--window);
+    color: var(--ink);
     font-size: 1.25rem;
     line-height: 1;
     cursor: pointer;
@@ -2199,8 +2452,7 @@ body.exam-running .topbar-copy {
     position: fixed;
     inset: 0;
     z-index: 55;
-    background: rgb(var(--overlay-rgb) / 0.44);
-    backdrop-filter: blur(2px);
+    background: var(--overlay);
   }
 
   body:not(.nav-open) .nav-backdrop {
@@ -2209,14 +2461,16 @@ body.exam-running .topbar-copy {
 
   /* --- action bar: the primary pair is pinned to the bottom --- */
   .actions-row {
+    position: static;
     display: block;
+    padding: 12px 16px;
+    border-top: 0;
+    margin-top: 0;
   }
 
   .actions-secondary {
     display: flex;
     gap: 8px;
-    /* The row used to scroll sideways with the scrollbar hidden, which cut
-       "See Explanation" off at the edge with no way to tell it was there. */
     flex-wrap: wrap;
     margin-bottom: 10px;
   }
@@ -2225,6 +2479,7 @@ body.exam-running .topbar-copy {
     flex: 1 1 auto;
     padding: 9px 13px;
     font-size: 0.85rem;
+    min-width: 0;
   }
 
   .actions-primary {
@@ -2236,25 +2491,54 @@ body.exam-running .topbar-copy {
     z-index: 30;
     gap: 10px;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: rgb(var(--surface-rgb) / 0.94);
-    backdrop-filter: blur(14px);
-    border-top: 1px solid rgb(var(--border-rgb) / 0.12);
+    background: var(--window);
+    border-top: 1px solid var(--paper-border);
   }
 
   .actions-primary button {
-    padding: 13px 16px;
+    padding: 12px 16px;
     font-size: 0.95rem;
   }
 
-  .actions-primary .ghost-button {
+  .actions-primary #prev-button {
     flex: 0 0 38%;
+    min-width: 0;
   }
 
-  .actions-primary .solid-button {
+  .actions-primary #next-button {
     flex: 1;
+    min-width: 0;
+  }
+
+  .progress-report,
+  .explanation-panel {
+    padding: 16px;
   }
 
   .app-footer {
     font-size: 0.8rem;
+    padding: 12px 16px;
+  }
+}
+
+/* ---------- Reduced motion ----------
+   The room is still by design; under reduced motion even the progress ease
+   and the sheet slide become instant. */
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 3s;
+  }
+
+  .summary-bar-fill,
+  .mode-button,
+  .solid-button,
+  .ghost-button,
+  .navigator-toggle,
+  .navigator-toggle-icon,
+  .scenario-chevron,
+  .option-button::before,
+  .navigator-panel {
+    transition: none;
   }
 }

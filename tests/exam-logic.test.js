@@ -324,6 +324,23 @@ test('the paper never repeats a question', () => {
   }
 });
 
+test('the paper keeps the exam order: case studies first, then labs, then the filler', () => {
+  for (const settings of blueprintSettings()) {
+    setBlueprint(settings);
+    const paper = api.buildExam(true);
+    // 0 = case study, 1 = lab task, 2 = Topic 6 filler. The ranks must never
+    // go backwards: a shuffle across sections interleaves the case studies
+    // with the filler and breaks the blueprint's "case studies first" promise.
+    const ranks = paper.questions.map((q) => (q.scenario_id ? 0 : q.topic_index === 5 ? 1 : 2));
+    for (let i = 1; i < ranks.length; i += 1) {
+      assert.ok(
+        ranks[i] >= ranks[i - 1],
+        `${JSON.stringify(settings)}: question ${paper.questions[i].id} broke the case-studies-first order`
+      );
+    }
+  }
+});
+
 test('the plan is cached, so the blueprint preview is the paper that is built', () => {
   setBlueprint({ scenarios: 2, lab: 10, questions: 60, minutes: 120 });
   const first = api.planExam(true);
